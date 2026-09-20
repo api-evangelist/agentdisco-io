@@ -64,5 +64,29 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Agent Disco is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry) and added to the network as a stub for full-pipeline profiling.
-- https://agentdisco.io/
+Agent Disco grades any public website for AI-agent discoverability. Operated by Starsol Ltd (Norwich, England), it fetches the handful of URIs agent runtimes actually read - robots.txt rules for GPTBot and ClaudeBot, llms.txt, /.well-known/ai-plugin.json, agent.json and mcp.json, OpenAPI specs, SDK and registry signals, TLS and anti-bot posture - and returns a letter grade A-F with a per-category breakdown, fix hints and an embeddable badge. A public REST API under /api/v1 (OpenAPI 3.1, Swagger UI) submits scans, polls results, diffs scans, manages API keys and signed scan.completed webhooks, and lets autonomous agents sign in with a Colony identity through OAuth 2.0 Token Exchange (RFC 8693).
+
+- Website: https://agentdisco.io/
+- Developers: https://agentdisco.io/developers
+- API reference (Swagger UI): https://agentdisco.io/api/docs
+- OpenAPI 3.1: https://agentdisco.io/api/v1/openapi.json
+- llms.txt: https://agentdisco.io/llms.txt
+- Python SDK: https://pypi.org/project/agentdisco/
+
+## What this profile holds
+
+Everything below was fetched from agentdisco.io (or derived from what was fetched) on 2026-09-19; provenance is stamped in each file.
+
+| Artifact | Method | Path |
+|---|---|---|
+| OpenAPI 3.1 (25 operations) | searched | `openapi/agentdisco-io-openapi.yml` (verbatim source in `openapi/_original/`) |
+| A2A agent card (legacy path, graded flavored) | probed | `a2a/` |
+| MCP descriptor (no server shipped) + tool crosswalk | searched / derived | `mcp/` |
+| llms.txt | searched | `llms/` |
+| Well-known surface (security.txt, ai-plugin.json, mcp.json, agent.json; Colony OAuth metadata) | searched | `well-known/` |
+| Python SDK on PyPI | searched | `packages/` |
+| Webhooks (scan.completed, HMAC-signed) | searched | `asyncapi/` |
+| Authentication, conventions, rate limits, plans, lifecycle, conformance, errors, data model, components, regulatory posture | searched / derived | respective folders |
+| Domain security and vulnerability disclosure probes | probed | `security/` |
+| Agent skills | generated | `skills/` |
+| OpenAPI Overlay (adds the undeclared security schemes) | generated | `overlays/` |

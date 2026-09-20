@@ -1,0 +1,12 @@
+# security.txt for agentdisco.io — RFC 9116
+#
+# Responsible-disclosure contact for security issues with
+# the Agent Disco scanner or this site. We prefer the form
+# mailer below because it's rate-limited + honeypot-
+# protected; plain email will follow once we set up a
+# dedicated security@ mailbox.
+
+Contact: https://agentdisco.io/contact
+Expires: 2027-09-19T23:03:58+00:00
+Preferred-Languages: en
+Canonical: https://agentdisco.io/.well-known/security.txt

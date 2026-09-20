@@ -1,0 +1,2094 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Agent Disco API",
+        "description": "Public HTTP API for Agent Disco \u2014 submit scans, inspect\nresults, consume the checks catalogue, embed grade badges.\nDocumented contract under `/api/v1/`. Rate-limited per\nclient IP (10 anonymous scans / day by default).\n",
+        "contact": {
+            "name": "Starsol Ltd",
+            "url": "https://agentdisco.io",
+            "email": "disty@agentdisco.io"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://agentdisco.io",
+            "description": "Production"
+        }
+    ],
+    "paths": {
+        "/api/v1/openapi.json": {
+            "get": {
+                "tags": [
+                    "OpenAPI"
+                ],
+                "summary": "Fetch this OpenAPI document.",
+                "operationId": "get_openapi_spec",
+                "responses": {
+                    "200": {
+                        "description": "OpenAPI 3.1 document describing the public API surface.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/keys": {
+            "get": {
+                "tags": [
+                    "Keys"
+                ],
+                "summary": "List the caller account's API keys.",
+                "description": "List the API keys belonging to the account of the presented key. Authenticate with one of the account's keys as `Authorization: Bearer <token>`. Plaintext tokens are never returned here \u2014 only at mint time. Useful for agents (which sign in via `POST /api/v1/auth/colony/agent` and have no web session) to enumerate + audit their own keys.",
+                "operationId": "get_api_key_list",
+                "responses": {
+                    "200": {
+                        "description": "The account's keys.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "keys": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ApiKeySummaryResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No account-bound key presented.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Keys"
+                ],
+                "summary": "Create an anonymous API key.",
+                "description": "Mint a new anonymous-tier API key. Response includes the plaintext token exactly once \u2014 store it immediately; the server keeps only a hash. Present the token as `Authorization: Bearer <token>` on subsequent calls to `POST /api/v1/scans` to use the higher per-key rate limit (100 scans/day) instead of the per-IP anonymous limit (10 scans/day).",
+                "operationId": "post_api_key_create",
+                "responses": {
+                    "201": {
+                        "description": "Key created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateApiKeyResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many mint requests from this IP.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/keys/{id}": {
+            "delete": {
+                "tags": [
+                    "Keys"
+                ],
+                "summary": "Revoke one of the caller account's API keys.",
+                "description": "Revoke one of the caller account's API keys by id. Authenticate with one of the account's keys as `Authorization: Bearer <token>` (you may revoke the key you authenticate with). A revoked key immediately drops to the anonymous rate limit. Idempotent. A key that doesn't exist or belongs to another account returns 404 \u2014 the endpoint can't be used to probe which key ids exist.",
+                "operationId": "delete_api_key_revoke",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-f-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Key revoked (or already was).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "tokenPrefix": {
+                                            "type": "string"
+                                        },
+                                        "revoked": {
+                                            "type": "boolean"
+                                        },
+                                        "alreadyRevoked": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No account-bound key presented.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such key under this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/badge.svg": {
+            "get": {
+                "tags": [
+                    "Websites"
+                ],
+                "summary": "Embeddable SVG grade badge for a host.",
+                "description": "Shields.io-style SVG for embedding on a third-party site. Shows the scan age; fades to grey after `agent_disco.badge_stale_days` (default 30) unless the embedder sends `?strict=1`, in which case a stale badge returns 410 Gone. Cached via filesystem pool + served with `Cache-Control` + an ETag.",
+                "operationId": "get_api_website_badge",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SVG badge.",
+                        "content": {
+                            "image/svg+xml": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "304": {
+                        "description": "Not modified (If-None-Match matched)."
+                    },
+                    "404": {
+                        "description": "Unknown host or no completed scan.",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "Latest scan failed, host was unlisted, or scan is stale and the caller sent `?strict=1`.",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/badge.png": {
+            "get": {
+                "tags": [
+                    "Websites"
+                ],
+                "summary": "Embeddable PNG grade badge for a host.",
+                "description": "PNG version of the grade badge, for embedders that cannot render SVG. Identical content, staleness, and caching rules as `badge.svg` \u2014 only the format differs.",
+                "operationId": "get_api_website_badge_png",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PNG badge.",
+                        "content": {
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "304": {
+                        "description": "Not modified (If-None-Match matched)."
+                    },
+                    "404": {
+                        "description": "Unknown host or no completed scan.",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "Latest scan failed, host was unlisted, or scan is stale and the caller sent `?strict=1`.",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/checks": {
+            "get": {
+                "tags": [
+                    "Checks"
+                ],
+                "summary": "List every active check.",
+                "description": "JSON sibling of the `/checks` catalogue page. ETag lets clients skip the payload on revisits.",
+                "operationId": "get_api_checks_index",
+                "responses": {
+                    "200": {
+                        "description": "Active checks.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChecksListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "304": {
+                        "description": "Not modified (If-None-Match matched)."
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/colony/agent": {
+            "get": {
+                "tags": [
+                    "Keys"
+                ],
+                "summary": "Discover the parameters for the Colony agent sign-in exchange.",
+                "description": "Machine-readable description of the agent sign-in flow: the Colony issuer, its token endpoint, and \u2014 crucially \u2014 the `audience` (this service's OIDC client_id) an agent must name when running the RFC 8693 token exchange at the Colony. Fetch this once instead of scraping the audience out of /llms.txt prose. The values are static per deployment and safely cacheable.",
+                "operationId": "get_api_colony_agent_login_discovery",
+                "responses": {
+                    "200": {
+                        "description": "Exchange parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "issuer": {
+                                            "type": "string",
+                                            "example": "https://thecolony.ai"
+                                        },
+                                        "token_endpoint": {
+                                            "description": "The Colony endpoint to POST the RFC 8693 exchange to.",
+                                            "type": "string",
+                                            "example": "https://thecolony.ai/oauth/token"
+                                        },
+                                        "audience": {
+                                            "description": "This service's OIDC client_id \u2014 the `audience` for your exchange.",
+                                            "type": "string"
+                                        },
+                                        "grant_type": {
+                                            "type": "string",
+                                            "example": "urn:ietf:params:oauth:grant-type:token-exchange"
+                                        },
+                                        "subject_token_type": {
+                                            "type": "string",
+                                            "example": "urn:ietf:params:oauth:token-type:access_token"
+                                        },
+                                        "requested_token_type": {
+                                            "type": "string",
+                                            "example": "urn:ietf:params:oauth:token-type:id_token"
+                                        },
+                                        "scope": {
+                                            "description": "Request at least this scope so the agent-subject claim is present.",
+                                            "type": "string",
+                                            "example": "openid profile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Colony login is not enabled on this deployment.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Keys"
+                ],
+                "summary": "Sign in with a Colony agent identity for an AgentDisco API key.",
+                "description": "Agent sign-in. Run the OAuth 2.0 Token Exchange (RFC 8693) against the Colony yourself with this service as the `audience` (our OIDC client_id \u2014 see /llms.txt), then POST the resulting `id_token` here; only a token minted for AgentDisco is accepted \u2014 never send your raw Colony credential. On success the response carries a freshly minted, authenticated-tier AgentDisco API key (plaintext shown ONCE) bound to your Colony account; present it as `Authorization: Bearer <token>` on subsequent calls. Agent-only \u2014 a human Colony subject is rejected.",
+                "operationId": "post_api_colony_agent_login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "id_token": {
+                                        "description": "An id_token you pre-exchanged at the Colony (RFC 8693) with AgentDisco as the audience.",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Key minted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateApiKeyResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing `id_token`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Verification or exchange failed (invalid/expired token, wrong audience, or a non-agent subject).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Colony login is not enabled on this deployment.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many attempts from this IP.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ops/check-health": {
+            "get": {
+                "tags": [
+                    "Ops"
+                ],
+                "summary": "Per-check rolling-window health counts.",
+                "description": "Per-check-key \u00d7 status counts over a rolling 24h window, sourced from completed scans. Protected by HTTP basic auth via `OPS_BASIC_AUTH_USER` / `OPS_BASIC_AUTH_PASS` env vars.",
+                "operationId": "get_api_ops_check_health",
+                "responses": {
+                    "200": {
+                        "description": "JSON counts per check key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OpsCheckHealthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid basic auth.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "opsBasic": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ops/version": {
+            "get": {
+                "tags": [
+                    "Ops"
+                ],
+                "summary": "What release is currently deployed.",
+                "description": "The release tag + commit SHA + timestamp recorded by `scripts/deploy-prod.sh` on its last successful run. Source of truth for \"what is live right now\". Protected by the same HTTP basic auth as `/api/v1/ops/check-health` \u2014 the SHA is more informative to an attacker than the tag alone, so fail-closed by default. Returns 404 when no deploy has been recorded (e.g. in dev before any deploy has run).",
+                "operationId": "get_api_ops_version",
+                "responses": {
+                    "200": {
+                        "description": "JSON `{tag, sha, deployedAt}`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OpsVersionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid basic auth.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No deployed-version record yet.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "opsBasic": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/scans": {
+            "post": {
+                "tags": [
+                    "Scans"
+                ],
+                "summary": "Submit a new scan.",
+                "description": "Queue a scan of the given URL. Runs asynchronously on the `scans` worker (inline in tests). Rate limit: 10 scans/day per client IP when unauthenticated; 100 scans/day per key when `Authorization: Bearer ak_\u2026` is presented. Mint a key via `POST /api/v1/keys`.",
+                "operationId": "post_api_scan_create",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateScanRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Scan accepted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScanAcceptedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "URL failed validation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Scan quota exceeded (anonymous or keyed bucket).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/scans/{id}": {
+            "get": {
+                "tags": [
+                    "Scans"
+                ],
+                "summary": "Fetch a scan by id.",
+                "operationId": "get_api_scan_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-f-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Scan found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScanDetailResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown scan id.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/scans/{id}/diff": {
+            "get": {
+                "tags": [
+                    "Scans"
+                ],
+                "summary": "Diff a scan against the previous one.",
+                "description": "What changed between this scan and the previous completed scan of the same host: the grade/score swing and the checks that flipped pass\u2194fail. `previousScanId` is null when there is no prior completed scan to compare against.",
+                "operationId": "get_api_scan_diff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-f-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The diff.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScanDiffResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown scan id.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/unlist": {
+            "post": {
+                "tags": [
+                    "Unlist"
+                ],
+                "summary": "Request an unlist verification token.",
+                "description": "Begin the DNS-TXT un-list flow. Returns a one-off token plus the TXT record the caller must configure at the target's `_agentdisco-verify.<host>` before POSTing to /unlist/confirm. Rate-limited to 1/hour per IP.",
+                "operationId": "post_api_website_unlist_request",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token issued.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnlistRequestResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Unlist quota exceeded for this IP.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/unlist/confirm": {
+            "post": {
+                "tags": [
+                    "Unlist"
+                ],
+                "summary": "Confirm the unlist with the issued token.",
+                "description": "Complete the un-list flow: resolves the `_agentdisco-verify.<host>` TXT record, checks it contains the token issued by /unlist, and flips Website.visibility to `unlisted` on match. Rate-limited to 1/hour per IP.",
+                "operationId": "post_api_website_unlist_confirm",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Host unlisted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnlistConfirmResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing token, or token/host mismatch, or the TXT record was not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Unlist quota exceeded for this IP.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/relist": {
+            "post": {
+                "tags": [
+                    "Unlist"
+                ],
+                "summary": "Request a re-list verification token.",
+                "description": "Begin the DNS-TXT re-list flow \u2014 the inverse of /unlist. Returns a one-off token plus the TXT record to publish at `_agentdisco-verify.<host>` before POSTing to /relist/confirm. A no-op (200) if the host is already listed. Rate-limited to 1/hour per IP.",
+                "operationId": "post_api_website_relist_request",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token issued, or host already listed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnlistRequestResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Quota exceeded for this IP.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/relist/confirm": {
+            "post": {
+                "tags": [
+                    "Unlist"
+                ],
+                "summary": "Confirm the re-list with the issued token.",
+                "description": "Complete the re-list flow: resolves `_agentdisco-verify.<host>` TXT, checks it contains the token issued by /relist, and flips Website.visibility back to `listed` on match.",
+                "operationId": "post_api_website_relist_confirm",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Host re-listed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnlistConfirmResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing token, or token/host mismatch, or the TXT record was not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/webhooks": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "List the caller account's webhooks.",
+                "description": "List the scan webhooks of the account behind the presented bearer key. Never returns the signing secret (only the create endpoint does, once) \u2014 just delivery health.",
+                "operationId": "get_api_webhook_list",
+                "responses": {
+                    "200": {
+                        "description": "The account's webhooks.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "webhooks": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WebhookResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No account-bound key presented.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Create a scan webhook.",
+                "description": "Register an https receiver for a host's completed scans. The host must already have been scanned. The response carries the HMAC signing secret ONCE \u2014 store it. Rate-limited at 5/hour per account (shared with the web form). Verify deliveries with HMAC-SHA256(secret, raw_body).",
+                "operationId": "post_api_webhook_create",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "host": {
+                                        "description": "A normalized host that has been scanned (e.g. example.com).",
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "description": "The https receiver URL.",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Webhook created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookCreatedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing fields, or a non-https / SSRF-blocked URL.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No account-bound key presented.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The host has not been scanned.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many webhook-creation attempts.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/webhooks/{id}": {
+            "delete": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Delete a webhook.",
+                "description": "Delete one of the caller account's webhooks. A missing webhook and another account's webhook both return 404 so ids can't be probed.",
+                "operationId": "delete_api_webhook_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-f-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        },
+                                        "deleted": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No account-bound key presented.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such webhook under this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}": {
+            "get": {
+                "tags": [
+                    "Websites"
+                ],
+                "summary": "Summary for a scanned website.",
+                "description": "Latest grade + score + scan count for the host. Intended for the CLI / CI plugin so they don't need to scrape HTML.",
+                "operationId": "get_api_website_show",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Website known.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebsiteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Websites"
+                ],
+                "summary": "Delete a website and all its scans.",
+                "description": "Right-to-delete (GDPR-style). Removes the Website row plus every Scan + Finding under it, then invalidates the badge cache. Unauthenticated for MVP but rate-limited at 1/min per IP.",
+                "operationId": "delete_api_website_delete",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Website removed."
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many deletion requests.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/scans": {
+            "get": {
+                "tags": [
+                    "Websites"
+                ],
+                "summary": "Scan history for a website.",
+                "description": "Completed-scan history for a host, most-recent first, paginated (`?page=1&perPage=10`, perPage capped at 50). Each entry carries the grade/score and a link to the full scan detail. Lets a monitoring agent track a grade trend over time.",
+                "operationId": "get_api_website_scans",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "perPage",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50
+                        }
+                    },
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Scan history.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScanHistoryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/websites/{host}/rescan": {
+            "post": {
+                "tags": [
+                    "Websites"
+                ],
+                "summary": "Re-scan a known website.",
+                "description": "Queue a fresh scan of an already-known host (its canonical URL). Counts against the caller's scan rate limit exactly like `POST /api/v1/scans` \u2014 present `Authorization: Bearer <key>` for the higher per-key quota. Returns the queued scan to poll at `statusUrl`.",
+                "operationId": "post_api_website_rescan",
+                "parameters": [
+                    {
+                        "name": "host",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[a-z0-9.\\-]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Re-scan queued.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScanAcceptedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The stored canonical URL failed re-validation.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown host.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Scan rate limit hit.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CreateScanRequest": {
+                "required": [
+                    "url"
+                ],
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "maxLength": 2048
+                    }
+                },
+                "type": "object"
+            },
+            "ApiKeySummaryResponse": {
+                "required": [
+                    "id",
+                    "tokenPrefix",
+                    "rateLimitTier",
+                    "createdAt",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "UUID of the key row \u2014 pass it to `DELETE /api/v1/keys/{id}` to revoke.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "tokenPrefix": {
+                        "description": "First 10 chars of the token (`ak_XXXXXXX`). Safe to display; can't authenticate.",
+                        "type": "string"
+                    },
+                    "label": {
+                        "description": "Optional human label set at mint time, or null.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rateLimitTier": {
+                        "description": "Rate-limit tier: `anonymous`, `authenticated`.",
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "description": "ISO 8601 creation timestamp.",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "lastUsedAt": {
+                        "description": "ISO 8601 timestamp of the most recent use, or null if never used.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "active": {
+                        "description": "False once the key has been revoked \u2014 a revoked key drops to the anonymous rate limit.",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "description": "Common JSON body for 4xx/5xx responses.",
+                "required": [
+                    "error",
+                    "message"
+                ],
+                "properties": {
+                    "error": {
+                        "description": "Short machine-readable slug, e.g. \"invalid_url\" or \"not_found\".",
+                        "type": "string"
+                    },
+                    "message": {
+                        "description": "Human-readable explanation.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CreateApiKeyResponse": {
+                "required": [
+                    "id",
+                    "token",
+                    "tokenPrefix",
+                    "rateLimitTier",
+                    "createdAt"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "UUID of the key row. Used as the rate-limit bucket identifier server-side.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "token": {
+                        "description": "Plaintext token. Shown ONCE \u2014 store it now. Every subsequent request presents it as `Authorization: Bearer <token>`.",
+                        "type": "string"
+                    },
+                    "tokenPrefix": {
+                        "description": "First 10 chars of the token (`ak_XXXXXXX`). Safe to display + log.",
+                        "type": "string"
+                    },
+                    "label": {
+                        "description": "Optional human name echoed back from the request, or null if none was given.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rateLimitTier": {
+                        "description": "Rate-limit tier this key uses. Today always `anonymous` (100 scans/day/key). Authenticated tiers land with user accounts.",
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "description": "ISO 8601 creation timestamp.",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "CheckResponse": {
+                "required": [
+                    "key",
+                    "label",
+                    "category",
+                    "weight",
+                    "phase",
+                    "description"
+                ],
+                "properties": {
+                    "key": {
+                        "description": "Stable key, e.g. crawl.robots_txt.",
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "weight": {
+                        "type": "integer"
+                    },
+                    "phase": {
+                        "description": "passive|active",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Markdown description \u2014 rendered on /checks/{key}.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ChecksListResponse": {
+                "required": [
+                    "checks"
+                ],
+                "properties": {
+                    "checks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CheckResponse"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "OpsCheckHealthResponse": {
+                "required": [
+                    "window_hours",
+                    "generated_at",
+                    "checks"
+                ],
+                "properties": {
+                    "window_hours": {
+                        "description": "Width of the rolling window the counts are aggregated over (hours).",
+                        "type": "integer",
+                        "example": 24
+                    },
+                    "generated_at": {
+                        "description": "When this snapshot was generated.",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "checks": {
+                        "description": "Map of check key (e.g. `well_known.ai_plugin`) to per-status counts over the window. Every key carries all five status buckets even when zero, so consumers can render without null-checks.",
+                        "type": "object",
+                        "additionalProperties": {
+                            "required": [
+                                "pass",
+                                "warn",
+                                "fail",
+                                "skip",
+                                "error"
+                            ],
+                            "properties": {
+                                "pass": {
+                                    "type": "integer",
+                                    "example": 42
+                                },
+                                "warn": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "fail": {
+                                    "type": "integer",
+                                    "example": 5
+                                },
+                                "skip": {
+                                    "type": "integer",
+                                    "example": 0
+                                },
+                                "error": {
+                                    "type": "integer",
+                                    "example": 0
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "OpsVersionResponse": {
+                "properties": {
+                    "tag": {
+                        "description": "SemVer release tag from the most recent successful deploy.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "example": "v1.2.3"
+                    },
+                    "sha": {
+                        "description": "Git commit SHA the tag pointed at.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "example": "d6fda3b00..."
+                    },
+                    "deployedAt": {
+                        "description": "When the deploy completed.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ScanAcceptedResponse": {
+                "required": [
+                    "id",
+                    "status",
+                    "statusUrl",
+                    "resultUrl"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "UUID of the new scan.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "description": "One of queued|running|completed|failed|cancelled.",
+                        "type": "string"
+                    },
+                    "statusUrl": {
+                        "description": "Poll this URL for current status.",
+                        "type": "string"
+                    },
+                    "resultUrl": {
+                        "description": "Public report page URL for the scanned host.",
+                        "type": "string"
+                    },
+                    "grade": {
+                        "description": "A..F letter grade once computed; null while queued/running.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "score": {
+                        "description": "0..100 score once computed; null while queued/running.",
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "FindingResponse": {
+                "required": [
+                    "id",
+                    "checkKey",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "checkKey": {
+                        "description": "e.g. crawl.robots_txt",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "pass|fail|warn|skip|error",
+                        "type": "string"
+                    },
+                    "pointsEarned": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "pointsPossible": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "evidence": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": true
+                    },
+                    "durationMs": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "ScanDetailResponse": {
+                "required": [
+                    "id",
+                    "status",
+                    "phase",
+                    "requestedUrl",
+                    "host",
+                    "findings",
+                    "queuedAt"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "phase": {
+                        "description": "passive|active",
+                        "type": "string"
+                    },
+                    "requestedUrl": {
+                        "type": "string"
+                    },
+                    "host": {
+                        "type": "string"
+                    },
+                    "score": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "grade": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "summary": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": true
+                    },
+                    "findings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FindingResponse"
+                        }
+                    },
+                    "queuedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "startedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "completedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ScanDiffResponse": {
+                "required": [
+                    "scanId",
+                    "newFailures",
+                    "newPasses"
+                ],
+                "properties": {
+                    "scanId": {
+                        "description": "The scan being diffed.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "previousScanId": {
+                        "description": "The previous completed scan compared against, or null if there is none.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "gradeFrom": {
+                        "description": "Grade of the previous scan, or null.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "gradeTo": {
+                        "description": "Grade of this scan, or null if not completed.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "scoreFrom": {
+                        "description": "Score of the previous scan, or null.",
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "scoreTo": {
+                        "description": "Score of this scan, or null if not completed.",
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "scoreDelta": {
+                        "description": "scoreTo \u2212 scoreFrom, or null when there is no previous scan.",
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "newFailures": {
+                        "description": "Check keys that flipped pass \u2192 fail since the previous scan.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "newPasses": {
+                        "description": "Check keys that flipped fail \u2192 pass since the previous scan.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "UnlistDnsRecord": {
+                "required": [
+                    "name",
+                    "type",
+                    "value"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "Fully-qualified record name to publish.",
+                        "type": "string",
+                        "example": "_agentdisco-verify.example.com"
+                    },
+                    "type": {
+                        "description": "DNS record type \u2014 always TXT.",
+                        "type": "string",
+                        "example": "TXT"
+                    },
+                    "value": {
+                        "description": "Verification token to embed in the record value.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UnlistRequestResponse": {
+                "required": [
+                    "token",
+                    "dns_record",
+                    "expires_in_seconds",
+                    "confirm_url"
+                ],
+                "properties": {
+                    "token": {
+                        "description": "32 hex chars, 128 bits of entropy. The caller must place this in a TXT record at `_agentdisco-verify.<host>` before POSTing to /unlist/confirm.",
+                        "type": "string"
+                    },
+                    "dns_record": {
+                        "$ref": "#/components/schemas/UnlistDnsRecord",
+                        "description": "TXT record the caller must publish for the confirm step to succeed."
+                    },
+                    "expires_in_seconds": {
+                        "description": "How long the token + cached host association is valid for.",
+                        "type": "integer",
+                        "example": 86400
+                    },
+                    "confirm_url": {
+                        "description": "URL the caller POSTs `{\"token\": \"...\"}` to in step 2.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UnlistConfirmResponse": {
+                "required": [
+                    "host",
+                    "visibility",
+                    "message"
+                ],
+                "properties": {
+                    "host": {
+                        "description": "Normalised host that was unlisted.",
+                        "type": "string"
+                    },
+                    "visibility": {
+                        "description": "New visibility \u2014 always `unlisted` on success.",
+                        "type": "string",
+                        "example": "unlisted"
+                    },
+                    "message": {
+                        "description": "Human-readable confirmation. Includes the re-list contact path.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookResponse": {
+                "required": [
+                    "id",
+                    "host",
+                    "url",
+                    "createdAt",
+                    "consecutiveFailures"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Webhook UUID \u2014 pass it to `DELETE /api/v1/webhooks/{id}`.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "host": {
+                        "description": "The scanned host whose completed scans fire this webhook.",
+                        "type": "string"
+                    },
+                    "url": {
+                        "description": "The receiver URL we POST signed JSON to.",
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "description": "ISO 8601 creation timestamp.",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "consecutiveFailures": {
+                        "description": "Consecutive delivery failures; auto-pauses after 5.",
+                        "type": "integer"
+                    },
+                    "lastSucceededAt": {
+                        "description": "ISO 8601 timestamp of the last successful delivery, or null.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "lastFailedAt": {
+                        "description": "ISO 8601 timestamp of the last failed delivery, or null.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookCreatedResponse": {
+                "required": [
+                    "id",
+                    "host",
+                    "url",
+                    "secret",
+                    "createdAt"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Webhook UUID.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "host": {
+                        "description": "The host whose completed scans fire this webhook.",
+                        "type": "string"
+                    },
+                    "url": {
+                        "description": "The receiver URL.",
+                        "type": "string"
+                    },
+                    "secret": {
+                        "description": "HMAC-SHA256 signing secret \u2014 shown ONCE. Store it now.",
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "description": "ISO 8601 creation timestamp.",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "WebsiteResponse": {
+                "required": [
+                    "host",
+                    "lastScannedAt",
+                    "scanCount"
+                ],
+                "properties": {
+                    "host": {
+                        "type": "string"
+                    },
+                    "latestGrade": {
+                        "description": "A..F once at least one scan has completed.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "latestScore": {
+                        "description": "0..100 once at least one scan has completed.",
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "lastScannedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "scanCount": {
+                        "description": "Count of completed scans for the host.",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ScanSummaryResponse": {
+                "required": [
+                    "id",
+                    "status",
+                    "statusUrl"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Scan UUID.",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "description": "Scan status \u2014 `completed` for history entries.",
+                        "type": "string"
+                    },
+                    "grade": {
+                        "description": "Letter grade A\u2013F, or null if the scan did not complete.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "score": {
+                        "description": "0\u2013100 score, or null if the scan did not complete.",
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "completedAt": {
+                        "description": "ISO 8601 completion timestamp, or null.",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "statusUrl": {
+                        "description": "Path to the full scan detail (findings) \u2014 `/api/v1/scans/{id}`.",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ScanHistoryResponse": {
+                "required": [
+                    "host",
+                    "scans",
+                    "totalCount",
+                    "page",
+                    "perPage"
+                ],
+                "properties": {
+                    "host": {
+                        "description": "The normalized host these scans belong to.",
+                        "type": "string"
+                    },
+                    "scans": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ScanSummaryResponse"
+                        }
+                    },
+                    "totalCount": {
+                        "description": "Total completed scans for this host (across all pages).",
+                        "type": "integer"
+                    },
+                    "page": {
+                        "description": "Current page (1-based).",
+                        "type": "integer"
+                    },
+                    "perPage": {
+                        "description": "Scans per page (max 50).",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Keys"
+        },
+        {
+            "name": "Websites"
+        },
+        {
+            "name": "Checks"
+        },
+        {
+            "name": "Ops"
+        },
+        {
+            "name": "Scans"
+        },
+        {
+            "name": "Unlist"
+        },
+        {
+            "name": "Webhooks"
+        },
+        {
+            "name": "OpenAPI",
+            "description": "OpenAPI"
+        }
+    ]
+}

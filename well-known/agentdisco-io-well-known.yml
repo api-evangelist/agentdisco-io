@@ -1,0 +1,133 @@
+generated: '2026-09-19'
+method: searched
+description: >-
+  Results of probing the /.well-known/ discovery surface on every host the record knows: the registrable
+  domain agentdisco.io (which is also the only API baseURL host and the only OpenAPI servers[] host - the
+  docs live at agentdisco.io/api/docs and agentdisco.io/developers), www.agentdisco.io (301s every path to
+  the apex), and thecolony.ai - the third-party authorization server that Agent Disco's own discovery
+  endpoint GET /api/v1/auth/colony/agent names as `issuer` and whose tokens the API accepts. No MCP host
+  exists (the MCP descriptor advertises no server). Status is the HTTP code observed at fetch time on
+  2026-09-19 with a browser User-Agent; only 2xx responses carrying a real, correctly-typed document were
+  saved. agentdisco.io answers misses with a real HTML 404 (status 404, 9.7 KB "Page not found"), so no
+  catch-all ambiguity: negative control /.well-known/agentdisco-io-negative-control-9f2a1c.json returned
+  404 on both agentdisco.io and thecolony.ai.
+path_echo_control: passed
+hit_count: 8
+hosts:
+- host: https://agentdisco.io
+  role: primary domain, API base host, OpenAPI servers[] host, docs host
+  documents:
+  - path: /.well-known/security.txt
+    status: 200
+    type: text/plain
+    file: agentdisco-io-security.txt
+    note: RFC 9116 - Contact (web form), Expires 2027-09-19, Preferred-Languages, Canonical.
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/api-catalog.json
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 200
+    type: application/json
+    file: agentdisco-io-ai-plugin.json
+    note: OpenAI plugin manifest v1; api.url points at https://agentdisco.io/api/v1/openapi.json; logo_url (/images/favicon.svg) 404s.
+  - path: /.well-known/ucp.json
+    status: 404
+  - path: /.well-known/acp.json
+    status: 404
+  - path: /.well-known/aauth-resource.json
+    status: 404
+  - path: /.well-known/apis.json
+    status: 404
+  - path: /apis.json
+    status: 404
+  - path: /apis.yml
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 200
+    type: application/json
+    file: agentdisco-io-agent.json
+    note: A2A AgentCard at the legacy path; graded flavored in a2a/agentdisco-io-a2a.yml (verbatim copy also at a2a/agentdisco-io-agent-card.json).
+  - path: /.well-known/mcp.json
+    status: 200
+    type: application/json
+    file: agentdisco-io-mcp.json
+    note: MCP descriptor (3 tools) whose own note says no JSON-RPC endpoint exists; see mcp/agentdisco-io-mcp.yml.
+  - path: /.well-known/mcp
+    status: 404
+  - path: /.well-known/openapi.json
+    status: 301
+    redirect: https://agentdisco.io/api/v1/openapi.json
+    note: Redirects to the live OpenAPI 3.1 document (200 application/json), harvested to openapi/.
+  - path: /.well-known/openapi.yaml
+    status: 404
+  - path: /.well-known/jwks.json
+    status: 404
+  - path: /.well-known/agentdisco-io-negative-control-9f2a1c.json
+    status: 404
+    control: negative
+- host: https://www.agentdisco.io
+  role: www alias
+  documents:
+  - path: /.well-known/security.txt
+    status: 301
+    redirect: https://agentdisco.io/.well-known/security.txt
+  - path: /.well-known/openid-configuration
+    status: 301
+  - path: /.well-known/oauth-authorization-server
+    status: 301
+  - path: /.well-known/oauth-protected-resource
+    status: 301
+  - path: /.well-known/api-catalog
+    status: 301
+  - path: /.well-known/ai-plugin.json
+    status: 301
+  - path: /.well-known/agent-card.json
+    status: 301
+  - path: /.well-known/agent.json
+    status: 301
+  - path: /.well-known/mcp.json
+    status: 301
+  - path: /.well-known/apis.json
+    status: 301
+  note: Every path 301s to the same path on https://agentdisco.io; nothing is served from www itself.
+- host: https://thecolony.ai
+  role: >-
+    THIRD-PARTY authorization server. Named as issuer by Agent Disco's GET /api/v1/auth/colony/agent
+    (observed 200) and in /llms.txt; Agent Disco is a relying party (client_id / audience
+    colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl) that accepts RFC 8693 id_tokens minted here. These documents
+    describe the Colony's identity network, not Agent Disco - recorded because they are the metadata an
+    agent must read to reach Agent Disco's authenticated tier without a human, the same way leadping's
+    auth-server metadata sits on authkit.app.
+  third_party: true
+  documents:
+  - path: /.well-known/openid-configuration
+    status: 200
+    type: application/json
+    file: agentdisco-io-colony-openid-configuration.json
+    note: issuer https://thecolony.ai; registration_endpoint /oauth/register (RFC 7591); grant types include authorization_code, refresh_token, token-exchange (RFC 8693), CIBA and device_code; PKCE S256.
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    type: application/json
+    file: agentdisco-io-colony-oauth-authorization-server.json
+    note: Byte-identical to the OIDC document (10,060 bytes).
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    type: application/json
+    file: agentdisco-io-colony-oauth-protected-resource.json
+    note: resource https://thecolony.ai; authorization_servers [https://thecolony.ai]; describes the Colony's own API, not Agent Disco's.
+  - path: /.well-known/security.txt
+    status: 200
+    type: text/plain
+    note: The Colony's own security contact (security@thecolony.cc). Not saved and not credited to Agent Disco.
+  - path: /.well-known/agentdisco-io-negative-control-9f2a1c.json
+    status: 404
+    control: negative

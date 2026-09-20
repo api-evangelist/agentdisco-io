@@ -1,0 +1,48 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  https://agentdisco.io/api/v1/openapi.json (info.version, path prefix), https://agentdisco.io/terms
+  (last updated 2026-04-21), https://agentdisco.io/privacy (retention), https://agentdisco.io/bot (nightly
+  rescan cadence), https://agentdisco.io/developers (webhook retry/auto-pause); /status, /changelog and
+  /pricing probed 404 on 2026-09-19.
+versioning:
+  scheme: URL path major version
+  mechanism: All operations live under /api/v1/; the OpenAPI info.version is 1.0.0.
+  current: v1
+  docs: https://agentdisco.io/api/docs
+  notes: >-
+    No version header, no date-pinning, no v2 surface. The deployed release is exposed as a SemVer tag +
+    commit SHA at GET /api/v1/ops/version, but that endpoint is operator-only (HTTP Basic) and so not a
+    public versioning signal.
+deprecation:
+  policy_url: null
+  changelog: null
+  sunset_header: false
+  notes: >-
+    No deprecation policy, no changelog and no RFC 8594 Deprecation/Sunset headers are published; no
+    operation in the spec is marked deprecated. The Python SDK repository carries tagged releases
+    (0.1.0 to 0.4.0, 2026-04-24 to 2026-07-20) but that is the SDK's history, not an API changelog.
+status_page: null
+status_page_note: /status returns the site's HTML 404 page; no status page or uptime history is published. Webhook delivery health is exposed per webhook (consecutiveFailures, lastSucceededAt, lastFailedAt) on GET /api/v1/webhooks.
+sla:
+  url: https://agentdisco.io/terms
+  public_uptime_target: null
+  notes: >-
+    Terms section 5: the Service is provided "as is" and "as available" without warranties; section 3
+    says the anonymous cap "is not a warranty of capacity and may be revised at any time". No numeric SLA.
+data_retention:
+  source: https://agentdisco.io/privacy
+  scan_records: Pruned automatically after 90 days, with one most-recent scan retained per host to keep embedded badges valid.
+  ip_addresses: Application logs held 30 days, then purged.
+  server_access_logs: 30 days.
+  account_activity_log: 90 days; removed immediately if the account is deleted.
+  right_to_delete: DELETE /api/v1/websites/{host} removes the host and every scan and finding under it (204).
+operational_cadence:
+  badge_staleness: Badge fades to grey after 30 days (agent_disco.badge_stale_days); returns 410 with ?strict=1.
+  nightly_rescan: A nightly job rescans a small batch of hosts whose badge has gone stale (typically older than 30 days); no background crawler.
+  webhook_delivery: 2xx expected within 10 seconds; 3 retries with exponential backoff; auto-pause after 5 consecutive terminal failures; counter resets on any 2xx.
+  unlist_token_validity: 86400 seconds (expires_in_seconds example).
+rate_limits: rate-limits/agentdisco-io-rate-limits.yml
+deprecated_products: []
+deprecated_operations: []
+legal_last_updated: '2026-04-21'

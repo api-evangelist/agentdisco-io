@@ -1,0 +1,73 @@
+generated: '2026-09-19'
+method: searched
+status: candidate
+descriptor_status: published
+source: https://agentdisco.io/.well-known/mcp.json
+llms_source: https://agentdisco.io/llms.txt
+description: >-
+  Agent Disco publishes an MCP descriptor at /.well-known/mcp.json (protocolVersion 2025-03-26, three tools
+  with inputSchema) but ships NO MCP server: the descriptor's own note says the tools "are currently exposed
+  over plain HTTP at https://agentdisco.io/api/v1" and that "a native JSON-RPC MCP endpoint is on the
+  roadmap". /mcp and /.well-known/mcp return 404 and the official MCP registry has no entry for agentdisco
+  (searched 2026-09-19). The tool list below is the provider's own, copied from the descriptor - not derived
+  by API Evangelist - but status stays candidate because nothing an MCP client can connect to exists. Each
+  tool is bound to its backing REST operation in agentdisco-io-tool-crosswalk.yml.
+deployment:
+  mode: none
+  endpoint: null
+  install: null
+  package: null
+  auth: none
+  verified: probed
+  evidence:
+  - {url: https://agentdisco.io/.well-known/mcp.json, status: 200, content_type: application/json}
+  - {url: https://agentdisco.io/mcp, status: 404}
+  - {url: https://agentdisco.io/.well-known/mcp, status: 404}
+  - {url: 'https://registry.modelcontextprotocol.io/v0/servers?search=agentdisco', status: 200, result: '0 servers'}
+  note: >-
+    No tools/list probe was possible because no JSON-RPC endpoint is advertised or discoverable; the
+    descriptor is a capability advertisement that bridges to the REST API.
+server:
+  name: agent-disco
+  version: 1.0.0
+  description: Discoverability scanner for AI-agent-friendly websites.
+  transport: none
+  url: null
+  protocol_version_declared: '2025-03-26'
+  capabilities:
+    tools: {listChanged: false}
+    resources: {subscribe: false, listChanged: false}
+tool_count: 3
+tools:
+- name: submit_scan
+  category: scans
+  description: Submit a URL to be graded for AI-agent discoverability. Returns a scan id to poll.
+  inputSchema:
+    type: object
+    properties:
+      url: {type: string, format: uri, description: Public URL of the site to scan.}
+    required: [url]
+  source_operation: openapi/agentdisco-io-openapi.yml#post_api_scan_create
+- name: get_grade
+  category: websites
+  description: Get the latest completed grade for a previously-scanned host.
+  inputSchema:
+    type: object
+    properties:
+      host: {type: string, description: Normalized hostname (e.g. example.com).}
+    required: [host]
+  source_operation: openapi/agentdisco-io-openapi.yml#get_api_website_show
+- name: colony_agent_login
+  category: auth
+  description: >-
+    Sign in with a Colony agent identity for an authenticated-tier AgentDisco API key: pre-exchange your
+    Colony credential at the Colony (OAuth 2.0 Token Exchange, RFC 8693, audience
+    colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl) and pass the resulting id_token - only a token minted for
+    AgentDisco is accepted, never a raw Colony credential. Non-interactive and agent-only; the returned ak_
+    key authenticates subsequent calls as Authorization: Bearer.
+  inputSchema:
+    type: object
+    properties:
+      id_token: {type: string, description: An id_token pre-exchanged at the Colony with AgentDisco as the audience.}
+    required: [id_token]
+  source_operation: openapi/agentdisco-io-openapi.yml#post_api_colony_agent_login

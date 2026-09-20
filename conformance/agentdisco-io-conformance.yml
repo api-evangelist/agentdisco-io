@@ -1,0 +1,118 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  https://agentdisco.io/api/v1/openapi.json, https://agentdisco.io/.well-known/ (security.txt, agent.json,
+  ai-plugin.json, mcp.json), https://agentdisco.io/llms.txt, https://agentdisco.io/developers,
+  https://agentdisco.io/privacy, GET https://agentdisco.io/api/v1/auth/colony/agent, and
+  https://thecolony.ai/.well-known/openid-configuration - all fetched 2026-09-19.
+standards:
+- id: openapi-3.1
+  conforms: true
+  evidence: >-
+    Provider serves a valid OpenAPI 3.1.0 document at https://agentdisco.io/api/v1/openapi.json (200,
+    application/json, 86,817 bytes, 20 paths / 25 operations / 20 schemas, every operation carrying an
+    operationId, summary and tag) - captured to openapi/_original/agentdisco-io-openapi.json.
+- id: openapi-securityschemes-defined
+  conforms: false
+  evidence: >-
+    components.securitySchemes is null while get_api_ops_check_health and get_api_ops_version declare
+    security [{opsBasic: []}], and the ak_ bearer scheme every account-scoped operation describes in prose is
+    not modelled at all. Repaired in overlays/agentdisco-io-openapi-overlay.yaml, not in the harvested spec.
+- id: rfc9116-security-txt
+  conforms: true
+  evidence: >-
+    /.well-known/security.txt returns 200 text/plain with Contact (https://agentdisco.io/contact), Expires
+    (2027-09-19T23:03:58+00:00), Preferred-Languages and Canonical. Contact is a rate-limited web form rather
+    than a mailbox; the file says a security@ address will follow.
+- id: llms-txt
+  conforms: true
+  evidence: /llms.txt (200, 3,794 bytes) and /llms-full.txt (200, 17,511 bytes) at the site root, in llmstxt.org format with H1, blockquote summary and link sections.
+- id: openai-ai-plugin-manifest
+  conforms: true
+  evidence: /.well-known/ai-plugin.json (200) with schema_version v1, name_for_model, description_for_model, auth {type none} and api {type openapi, url https://agentdisco.io/api/v1/openapi.json}.
+- id: a2a-agent-card
+  conforms: true
+  grade: flavored
+  evidence: >-
+    A2A AgentCard at the legacy /.well-known/agent.json (200; canonical agent-card.json 404). capabilities is
+    an object and skills an array, but there is no protocolVersion, authentication uses the pre-0.3
+    schemes[] shape, and endpoints[] point at REST/OpenAPI rather than an A2A endpoint. See
+    a2a/agentdisco-io-a2a.yml.
+- id: mcp
+  conforms: false
+  evidence: >-
+    /.well-known/mcp.json (200) advertises protocolVersion 2025-03-26 and three tools, but its own note says
+    no JSON-RPC MCP endpoint exists yet; /mcp 404, no registry entry. A descriptor, not a server. See
+    mcp/agentdisco-io-mcp.yml.
+- id: oauth2-token-exchange-rfc8693
+  conforms: true
+  evidence: >-
+    POST /api/v1/auth/colony/agent accepts an id_token minted at https://thecolony.ai via
+    urn:ietf:params:oauth:grant-type:token-exchange with audience colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl,
+    and GET /api/v1/auth/colony/agent publishes the issuer, token_endpoint, audience, grant_type,
+    subject_token_type and requested_token_type (observed 200). The Colony's own metadata lists the
+    token-exchange grant. Agent Disco is the relying party; the authorization server is a third party.
+- id: rfc8414-authorization-server-metadata
+  conforms: false
+  evidence: /.well-known/oauth-authorization-server returns 404 on agentdisco.io; the authorization server Agent Disco relies on (thecolony.ai) serves it (200), but that is the Colony's document, not Agent Disco's.
+- id: rfc9728-protected-resource-metadata
+  conforms: false
+  evidence: /.well-known/oauth-protected-resource returns 404 on agentdisco.io.
+- id: oidc-discovery
+  conforms: false
+  evidence: /.well-known/openid-configuration returns 404 on agentdisco.io (Agent Disco is an OIDC client of the Colony, not a provider).
+- id: oauth2-dynamic-client-registration
+  conforms: false
+  evidence: >-
+    Not on agentdisco.io. The Colony advertises registration_endpoint https://thecolony.ai/oauth/register
+    (RFC 7591), which is how an agent obtains a Colony identity to exchange; the functional equivalent on
+    Agent Disco itself is the unauthenticated POST /api/v1/keys self-service key mint (5/hour per IP).
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: Errors are application/json {error, message} (ErrorResponse) - no application/problem+json anywhere in the 25-operation spec; observed live on 401 and 404. See errors/agentdisco-io-problem-types.yml.
+- id: rfc8594-sunset-header
+  conforms: false
+  evidence: No Deprecation/Sunset headers documented, no deprecation policy page, no operation marked deprecated.
+- id: http-conditional-requests
+  conforms: true
+  evidence: get_api_checks_index and both badge operations declare 304 on If-None-Match; an ETag was observed on GET /api/v1/checks (2026-09-19).
+- id: cors
+  conforms: true
+  evidence: access-control-allow-origin:* observed on GET /api/v1/checks and GET /api/v1/websites/{host} and on the well-known manifests.
+- id: hsts-preload
+  conforms: true
+  evidence: strict-transport-security max-age=63072000; includeSubDomains; preload on every response observed.
+- id: pagination-offset
+  conforms: true
+  evidence: get_api_website_scans takes ?page=1&perPage=10 (perPage capped at 50) and returns totalCount, page, perPage (ScanHistoryResponse).
+- id: idempotency-key
+  conforms: false
+  evidence: No Idempotency-Key header or replay semantics documented; only delete_api_key_revoke is described as idempotent. See conventions/agentdisco-io-conventions.yml.
+- id: uk-gdpr-right-to-erasure
+  conforms: true
+  evidence: >-
+    Privacy policy section 6 names DELETE /api/v1/websites/{host} as the self-service right-to-delete
+    endpoint; the spec describes it as "Right-to-delete (GDPR-style)", unauthenticated, 1/minute per IP,
+    returning 204. Starsol Ltd is ICO-registered (ZA083698).
+- id: robots-txt-ai-crawler-policy
+  conforms: true
+  evidence: /robots.txt explicitly Allows GPTBot, ChatGPT-User, Claude-Web, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended, CCBot, Applebot-Extended, Amazonbot, Bytespider and Meta-ExternalAgent, and advertises the sitemap.
+- id: sitemap-xml
+  conforms: true
+  evidence: /sitemap.xml (200, application/xml) lists the site, the check pages and every discovery manifest.
+- id: webhook-hmac-signatures
+  conforms: true
+  evidence: Deliveries carry X-Agent-Disco-Signature sha256=<hex> = HMAC-SHA256(secret, raw_body), documented with a constant-time verification sample on /developers. See asyncapi/agentdisco-io-webhooks.yml.
+domain_standard:
+  applicable: false
+  note: >-
+    Agent-discoverability grading has no ratified domain standard to declare (no SCIM/OData/OpenRTB-class
+    contract signature applies). The contract does consume the standards it grades - llms.txt, A2A
+    AgentCard, ai-plugin.json, MCP descriptor, RFC 9116 - and those are recorded above. Reward-only:
+    nothing is claimed here.
+certifications: []
+compliance_note: >-
+  No SOC 2 / ISO 27001 / PCI / HIPAA claims, trust center or compliance page is published (/security,
+  /trust-adjacent paths 404; terms and privacy make no certification claims). No Compliance pointer is
+  emitted. The only regulatory posture published is UK GDPR: ICO registration, UK data storage, and the
+  right-to-delete endpoint - recorded in regulatory/agentdisco-io-regulatory-posture.yml.

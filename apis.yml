@@ -1,18 +1,72 @@
 aid: agentdisco-io
 name: Agent Disco
-description: 'Agent Disco is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry)
-  and added to the network as a stub for full-pipeline profiling.'
+description: >-
+  Agent Disco grades any public website for AI-agent discoverability. Operated by Starsol Ltd (Norwich,
+  England), it fetches the handful of URIs agent runtimes actually read - robots.txt rules for GPTBot and
+  ClaudeBot, llms.txt, /.well-known/ai-plugin.json, agent.json and mcp.json, OpenAPI specs, SDK and registry
+  signals, TLS and anti-bot posture - and returns a letter grade A-F with a per-category breakdown, fix hints
+  and an embeddable badge. A public REST API under /api/v1 (OpenAPI 3.1, Swagger UI) submits scans, polls
+  results, diffs scans, manages API keys and signed scan.completed webhooks, and lets autonomous agents sign
+  in with a Colony identity through OAuth 2.0 Token Exchange (RFC 8693).
+image: https://agentdisco.io/assets/images/favicon-yxiULnz.svg
 url: https://raw.githubusercontent.com/api-evangelist/agentdisco-io/refs/heads/main/apis.yml
 x-type: company
 x-source: harvest:a2a-registry
-x-tier: stub
-x-tier-reason: harvest
+x-tier: profiled
+x-tier-reason: 'enrichment pass 2026-09-19: full contract discovery run; live OpenAPI 3.1 at /api/v1/openapi.json, legacy-path A2A agent card, MCP descriptor, llms.txt, security.txt and a PyPI SDK found on agentdisco.io'
 specificationVersion: '0.20'
 created: '2026-09-19'
 modified: '2026-09-19'
 tags:
-- Company
-apis: []
+- AI Agents
+- Agent Discoverability
+- Website Auditing
+- Developer Tools
+- Webhooks
+- llms.txt
+- A2A
+- MCP
+- Scanning
+apis:
+- name: Agent Disco API
+  description: >-
+    Public HTTP API under /api/v1 - submit a URL for grading, poll the scan, diff it against the previous
+    scan, read a host's latest grade and history, embed an SVG/PNG grade badge, read the check catalogue,
+    mint and revoke API keys, register signed scan.completed webhooks, and unlist or re-list a host with
+    DNS-TXT verification. Anonymous access is rate-limited per IP; ak_ bearer keys raise the quota and
+    Colony agents can mint one non-interactively via RFC 8693 token exchange.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - AI Agents
+  - Agent Discoverability
+  - Website Auditing
+  - Webhooks
+  - Scanning
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-openapi.yml
+  - type: OpenAPI
+    name: Provider-hosted OpenAPI 3.1 document
+    url: https://agentdisco.io/api/v1/openapi.json
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: Overlay
+    url: overlays/agentdisco-io-openapi-overlay.yaml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
@@ -21,3 +75,76 @@ maintainers:
 common:
 - type: Website
   url: https://agentdisco.io/
+- type: DeveloperPortal
+  url: https://agentdisco.io/developers
+- type: Documentation
+  url: https://agentdisco.io/developers
+- type: APIReference
+  url: https://agentdisco.io/api/docs
+- type: GettingStarted
+  url: https://agentdisco.io/llms-full.txt
+- type: Support
+  url: https://agentdisco.io/contact
+- type: TermsOfService
+  url: https://agentdisco.io/terms
+- type: PrivacyPolicy
+  url: https://agentdisco.io/privacy
+- type: SignUp
+  url: https://agentdisco.io/register
+- type: Login
+  url: https://agentdisco.io/login
+- type: GitHubOrganization
+  url: https://github.com/agentdisco
+- type: LLMsTxt
+  url: llms/agentdisco-io-llms.txt
+- type: WellKnown
+  url: well-known/agentdisco-io-well-known.yml
+- type: SecurityTxt
+  url: well-known/agentdisco-io-security.txt
+- type: AgentCard
+  url: a2a/agentdisco-io-a2a.yml
+- type: MCPServer
+  url: mcp/agentdisco-io-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/agentdisco-io-tool-crosswalk.yml
+- type: Packages
+  url: packages/agentdisco-io-packages.yml
+- type: SDKs
+  url: packages/agentdisco-io-packages.yml
+- type: Authentication
+  url: authentication/agentdisco-io-authentication.yml
+- type: Conventions
+  url: conventions/agentdisco-io-conventions.yml
+- type: ErrorCatalog
+  url: errors/agentdisco-io-problem-types.yml
+- type: DataModel
+  url: data-model/agentdisco-io-data-model.yml
+- type: RateLimits
+  url: rate-limits/agentdisco-io-rate-limits.yml
+- type: Plans
+  url: plans/agentdisco-io-plans-pricing.yml
+- type: Webhooks
+  url: asyncapi/agentdisco-io-webhooks.yml
+- type: Conformance
+  url: conformance/agentdisco-io-conformance.yml
+- type: Lifecycle
+  url: lifecycle/agentdisco-io-lifecycle.yml
+- type: Components
+  url: components/agentdisco-io-components.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: DomainSecurity
+  url: security/agentdisco-io-domain-security.yml
+- type: VulnerabilityDisclosure
+  url: security/agentdisco-io-vulnerability-disclosure.yml
+- type: Security
+  url: security/agentdisco-io-vulnerability-disclosure.yml
+- type: DataSubjectRequest
+  url: https://agentdisco.io/privacy
+- type: DataResidency
+  url: https://agentdisco.io/privacy
+x-enrichment:
+  date: '2026-09-19'
+  status: enriched
+  artifacts_added: 25
+  pass: local-v3

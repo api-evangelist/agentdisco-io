@@ -1,0 +1,97 @@
+generated: '2026-09-19'
+method: derived
+source: >-
+  Derived by aligning the provider-published MCP descriptor (/.well-known/mcp.json, 3 tools) and the A2A
+  agent card skills (/.well-known/agent.json, 5 skills) with the provider's OpenAPI 3.1 document
+  (openapi/agentdisco-io-openapi.yml, 25 operations, harvested from https://agentdisco.io/api/v1/openapi.json).
+  Bindings are unambiguous because the descriptor's note states the tools are exposed over the /api/v1 REST
+  surface and the card's endpoints[] point at the same OpenAPI.
+purpose: >-
+  Bind each agent-facing tool to its backing REST operation so the tool inherits the operation's real
+  parameters + requestBody as its inputSchema. Agent Disco has one data core exposed as REST; the MCP
+  descriptor and the agent card are two thin projections of a subset of it, and neither is callable over
+  its own protocol - both route to HTTP.
+surfaces:
+  rest_openapi: openapi/agentdisco-io-openapi.yml     # 25 operations, 20 schemas; live at /api/v1/openapi.json
+  graphql: null                                        # no GraphQL surface (/graphql 404)
+  mcp: null                                            # descriptor only at /.well-known/mcp.json; no JSON-RPC endpoint exists
+  a2a: null                                            # agent card at /.well-known/agent.json; no A2A endpoint, card url is the website
+crosswalk:
+- tool: submit_scan
+  surface: mcp
+  category: scans
+  rest: [post_api_scan_create]
+  binding: rest
+  confidence: high
+  note: inputSchema {url} matches CreateScanRequest {url}; response is ScanAcceptedResponse (202) with statusUrl to poll.
+- tool: get_grade
+  surface: mcp
+  category: websites
+  rest: [get_api_website_show]
+  binding: rest
+  confidence: high
+  note: inputSchema {host} matches the {host} path parameter; response is WebsiteResponse.
+- tool: colony_agent_login
+  surface: mcp
+  category: auth
+  rest: [post_api_colony_agent_login, get_api_colony_agent_login_discovery]
+  binding: rest
+  confidence: high
+  note: inputSchema {id_token} matches the request body; the GET discovery sibling publishes the issuer/audience the exchange needs.
+- tool: submit-scan
+  surface: a2a-skill
+  category: scans
+  rest: [post_api_scan_create, get_api_scan_show]
+  binding: rest
+  confidence: high
+  note: Skill description says "returns a scan id immediately; result is available once status=completed" - submit then poll.
+- tool: get-latest-grade
+  surface: a2a-skill
+  category: websites
+  rest: [get_api_website_show]
+  binding: rest
+  confidence: high
+- tool: list-checks
+  surface: a2a-skill
+  category: checks
+  rest: [get_api_checks_index]
+  binding: rest
+  confidence: high
+- tool: embed-badge
+  surface: a2a-skill
+  category: websites
+  rest: [get_api_website_badge, get_api_website_badge_png]
+  binding: rest
+  confidence: high
+  note: Skill names the SVG badge; the PNG sibling has identical semantics.
+- tool: colony-agent-login
+  surface: a2a-skill
+  category: auth
+  rest: [post_api_colony_agent_login]
+  binding: rest
+  confidence: high
+mcp_only: []
+rest_only:
+- capability: scans
+  operations: [get_api_scan_diff]
+- capability: websites
+  operations: [get_api_website_scans, post_api_website_rescan, delete_api_website_delete]
+- capability: keys
+  operations: [post_api_key_create, get_api_key_list, delete_api_key_revoke]
+- capability: webhooks
+  operations: [get_api_webhook_list, post_api_webhook_create, delete_api_webhook_delete]
+- capability: unlist
+  operations: [post_api_website_unlist_request, post_api_website_unlist_confirm, post_api_website_relist_request, post_api_website_relist_confirm]
+- capability: ops (HTTP Basic, operator-only)
+  operations: [get_api_ops_check_health, get_api_ops_version]
+- capability: meta
+  operations: [get_openapi_spec]
+coverage:
+  mcp_tools_named: 3
+  mcp_tools_bound: 3
+  a2a_skills_named: 5
+  a2a_skills_bound: 5
+  mcp_only: 0
+  rest_operations_total: 25
+  rest_operations_with_a_tool_or_skill: 7
+  rest_only: 18

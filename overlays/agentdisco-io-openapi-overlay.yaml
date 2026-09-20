@@ -1,0 +1,88 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Agent Disco API
+  version: 1.0.0
+  description: >-
+    Overlay of API Evangelist enhancements to the provider's OpenAPI 3.1.0 document (harvested verbatim to
+    openapi/_original/agentdisco-io-openapi.json from https://agentdisco.io/api/v1/openapi.json on 2026-09-19).
+    The harvested spec is never mutated. The material change here is to model the security schemes the spec
+    describes in prose but leaves undeclared: components.securitySchemes is null while two operations
+    reference `opsBasic` and every account-scoped operation says "Authenticate ... as Authorization: Bearer
+    <token>". Everything added is taken from the spec's own operation descriptions and
+    https://agentdisco.io/developers.
+extends: openapi/agentdisco-io-openapi.yml
+actions:
+- target: $.info
+  update:
+    x-apievangelist-provenance:
+      harvested: '2026-09-19'
+      source: https://agentdisco.io/api/v1/openapi.json
+      method: searched
+    x-apievangelist-notes:
+    - components.securitySchemes was null in the harvested document; the bearer and basic schemes below are added from the operation descriptions.
+    - No 5xx responses are declared on any operation.
+    - Error bodies use ErrorResponse {error, message}, not RFC 9457.
+- target: $
+  update:
+    externalDocs:
+      description: Developer page - API keys, quotas, Colony agent sign-in, SDK and webhooks
+      url: https://agentdisco.io/developers
+- target: $.servers[0]
+  update:
+    description: Production - all paths are prefixed /api/v1
+- target: $.components
+  update:
+    securitySchemes:
+      bearerApiKey:
+        type: http
+        scheme: bearer
+        bearerFormat: ak_ token
+        description: >-
+          API key presented as `Authorization: Bearer ak_...`. Minted anonymously by POST /api/v1/keys
+          (rateLimitTier anonymous, 100 scans/day) or bound to an account via website sign-in or POST
+          /api/v1/auth/colony/agent (rateLimitTier authenticated, 500 scans/day). Account-scoped operations
+          (keys, webhooks) require an account-bound key.
+      opsBasic:
+        type: http
+        scheme: basic
+        description: Operator-only HTTP Basic auth (realm "ops") on /api/v1/ops/*; credentials are deployment env vars, not issued to API consumers.
+- target: $.paths['/api/v1/keys'].get
+  update:
+    security: [{bearerApiKey: []}]
+- target: $.paths['/api/v1/keys/{id}'].delete
+  update:
+    security: [{bearerApiKey: []}]
+- target: $.paths['/api/v1/webhooks'].get
+  update:
+    security: [{bearerApiKey: []}]
+- target: $.paths['/api/v1/webhooks'].post
+  update:
+    security: [{bearerApiKey: []}]
+- target: $.paths['/api/v1/webhooks/{id}'].delete
+  update:
+    security: [{bearerApiKey: []}]
+- target: $.paths['/api/v1/scans'].post
+  update:
+    security: [{}, {bearerApiKey: []}]
+    x-rate-limit: 10 scans/day per IP anonymous; 100/day per anonymous key; 500/day per account-bound key
+- target: $.paths['/api/v1/websites/{host}/rescan'].post
+  update:
+    security: [{}, {bearerApiKey: []}]
+    x-rate-limit: Counts against the same scan quota as POST /api/v1/scans
+- target: $.paths['/api/v1/keys'].post
+  update:
+    x-rate-limit: 5 key mints/hour per IP
+- target: $.paths['/api/v1/websites/{host}'].delete
+  update:
+    x-rate-limit: 1/minute per IP
+    x-reversibility: irreversible - removes the Website and every Scan and Finding; GDPR-style right to delete
+- target: $.tags
+  update:
+  - {name: Scans, description: Submit a URL, poll the result, diff against the previous scan}
+  - {name: Websites, description: Latest grade, scan history, rescan, badges and right-to-delete for a host}
+  - {name: Checks, description: The published check catalogue the grade is summed from}
+  - {name: Keys, description: Mint, list and revoke ak_ API keys; Colony agent sign-in}
+  - {name: Webhooks, description: Signed scan.completed deliveries to an https receiver}
+  - {name: Unlist, description: DNS-TXT verified unlist and relist of a host}
+  - {name: Ops, description: Operator-only health and deployed-version endpoints (HTTP Basic)}
+  - {name: OpenAPI, description: This document}

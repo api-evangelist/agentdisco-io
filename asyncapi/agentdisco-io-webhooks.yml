@@ -1,0 +1,88 @@
+generated: '2026-09-19'
+method: searched
+source: https://agentdisco.io/developers#webhooks-title
+name: Agent Disco scan webhooks
+spec_type: Webhooks
+asyncapi_document: null
+asyncapi_note: No AsyncAPI document is published (/asyncapi.yaml 404; none in the GitHub org). This captures the documented webhook surface verbatim.
+direction: outbound
+summary: >-
+  One outbound event, scan.completed, delivered as a signed JSON POST to an https receiver registered per
+  host. Registration is account-scoped (website account page or POST /api/v1/webhooks with an account-bound
+  ak_ key), the HMAC secret is shown once, deliveries retry three times with exponential backoff and the
+  webhook auto-pauses after five consecutive terminal failures.
+management:
+  api:
+  - operation: post_api_webhook_create
+    method: POST
+    path: /api/v1/webhooks
+    body: '{"host": "...", "url": "https://..."}'
+    returns: WebhookCreatedResponse - the HMAC secret is shown ONCE
+    auth: account-bound ak_ bearer key
+    rate_limit: 5/hour per account
+    precondition: the host must already have been scanned (404 otherwise)
+  - operation: get_api_webhook_list
+    method: GET
+    path: /api/v1/webhooks
+    returns: delivery health (consecutiveFailures, lastSucceededAt, lastFailedAt) - never the secret
+  - operation: delete_api_webhook_delete
+    method: DELETE
+    path: /api/v1/webhooks/{id}
+  ui: Sign in, open /account, section "Scan webhooks" - host + receiver URL; the 32-byte HMAC signing secret is shown exactly once.
+  receiver_requirements: [https URL, not SSRF-blocked (400 otherwise), respond 2xx within 10 seconds]
+events:
+- id: scan.completed
+  name: scan.completed
+  trigger: A scan of a host you registered completes (any completed scan of that host, including nightly stale-badge rescans and scans submitted by others).
+  method: POST
+  content_type: application/json
+  headers:
+  - {name: X-Agent-Disco-Event, value: scan.completed}
+  - {name: X-Agent-Disco-Webhook-Id, value: 'webhook UUID (e.g. 019d...)'}
+  - {name: X-Agent-Disco-Signature, value: 'sha256=<hex>'}
+  payload_example:
+    event: scan.completed
+    scan:
+      id: 019d...
+      host: your-site.example
+      grade: B
+      score: 72
+      completedAt: '2026-04-25T10:00:00+00:00'
+      statusUrl: /api/v1/scans/019d...
+      resultUrl: /report/your-site.example
+  payload_fields:
+  - {name: event, type: string, value: scan.completed}
+  - name: scan.id
+    type: string (UUIDv7)
+    description: scan id; the embedded timestamp supports replay rejection
+  - {name: scan.host, type: string}
+  - {name: scan.grade, type: string A-F}
+  - {name: scan.score, type: integer 0-100}
+  - {name: scan.completedAt, type: string date-time}
+  - name: scan.statusUrl
+    type: string
+    description: 'relative path to GET /api/v1/scans/{id} for the full findings'
+  - name: scan.resultUrl
+    type: string
+    description: relative path to the public report page
+  source: https://agentdisco.io/developers
+security:
+  signature:
+    header: X-Agent-Disco-Signature
+    scheme: '"sha256=" + hex(HMAC-SHA256(secret, raw_body))'
+    verification: Recompute over the RAW body and compare in constant time (hmac.compare_digest sample published in Python).
+    secret: 32-byte per-webhook secret, shown once at creation.
+  replay_protection:
+    nonce: none - the signature does not include a nonce
+    guidance: Reject payloads whose scan.id (UUIDv7) timestamp or scan.completedAt is older than a window you choose; the provider recommends 5 minutes.
+  transport: https receivers only
+delivery:
+  timeout_seconds: 10
+  success: any 2xx
+  failure: 4xx, 5xx, timeout, DNS failure
+  retries: 3 with exponential backoff
+  auto_pause: after 5 consecutive terminal failures the webhook stops firing; the row stays in the account. Resume by deleting and re-creating it, or by making the next attempt succeed (counter resets on any 2xx).
+  health_fields: [consecutiveFailures, lastSucceededAt, lastFailedAt]
+related:
+  openapi: openapi/agentdisco-io-openapi.yml
+  conventions: conventions/agentdisco-io-conventions.yml

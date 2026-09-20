@@ -1,0 +1,60 @@
+generated: '2026-09-19'
+method: probed
+source: https://agentdisco.io/.well-known/agent.json
+description: >-
+  A2A Agent Card observed at the pre-0.3 legacy path /.well-known/agent.json on agentdisco.io (the canonical
+  /.well-known/agent-card.json returned 404). Grade is measured against the A2A 1.0.0 AgentCard object:
+  'conformant' passes every structural check, 'near-conformant' is correctly shaped but omits optional
+  fields, 'flavored' fails a hard check and is an agent card in spirit rather than in schema.
+  Provider-published by construction - served from the provider's own host; nothing here is derived or
+  generated. Agent Disco is itself a discoverability grader and publishes this card as dogfood (its llms.txt
+  says so); the card points at the REST API and its OpenAPI rather than at an A2A JSON-RPC endpoint, so the
+  agent is reachable over HTTP/OpenAPI, not over the A2A protocol.
+discovery:
+  path: /.well-known/agent.json
+  canonical: false
+  host: agentdisco.io
+  canonical_path_status: 404
+conformance:
+  spec: A2A 1.0.0
+  grade: flavored
+  protocol_version: null
+  preferred_transport: null
+  deviations:
+  - no-protocolVersion
+  - legacy-path-agent.json
+  - authentication.schemes-instead-of-securitySchemes
+  - endpoints-array-instead-of-additionalInterfaces
+  - url-is-website-not-a2a-endpoint
+  - no-preferredTransport
+  - no-defaultInputModes
+  - no-defaultOutputModes
+  - skills-without-tags
+  checks:
+    capabilities_is_object: true
+    protocolVersion_present: false
+    skills_is_array: true
+card:
+  name: Agent Disco
+  description: >-
+    Grade any public URL for AI-agent discoverability. Scans robots.txt, llms.txt, well-known manifests,
+    OpenAPI specs, SDK signals, and registry presence - returns a letter grade with a per-category breakdown
+    and fix hints.
+  url: https://agentdisco.io
+  version: 1.0.0
+  provider: Starsol Ltd
+  authentication: none (authentication.schemes = [none])
+  capabilities: {streaming: false, pushNotifications: false, stateTransitionHistory: true}
+  skills: 5
+  skill_ids: [submit-scan, get-latest-grade, list-checks, embed-badge, colony-agent-login]
+  endpoints:
+  - {type: openapi, url: https://agentdisco.io/api/v1/openapi.json}
+  - {type: https, url: https://agentdisco.io/api/v1}
+  file: agentdisco-io-agent-card.json
+x-evidence:
+  fetched: '2026-09-19'
+  url: https://agentdisco.io/.well-known/agent.json
+  http_status: 200
+  content_type: application/json
+  cache_control: max-age=3600, public, stale-while-revalidate=86400
+  note: Verbatim body saved alongside this manifest. No field inferred.

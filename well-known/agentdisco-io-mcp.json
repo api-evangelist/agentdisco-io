@@ -1,0 +1,70 @@
+{
+    "protocol": "mcp",
+    "protocolVersion": "2025-03-26",
+    "server": {
+        "name": "agent-disco",
+        "version": "1.0.0",
+        "description": "Discoverability scanner for AI-agent-friendly websites."
+    },
+    "capabilities": {
+        "tools": {
+            "listChanged": false
+        },
+        "resources": {
+            "subscribe": false,
+            "listChanged": false
+        }
+    },
+    "tools": [
+        {
+            "name": "submit_scan",
+            "description": "Submit a URL to be graded for AI-agent discoverability. Returns a scan id to poll.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Public URL of the site to scan."
+                    }
+                },
+                "required": [
+                    "url"
+                ]
+            }
+        },
+        {
+            "name": "get_grade",
+            "description": "Get the latest completed grade for a previously-scanned host.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "host": {
+                        "type": "string",
+                        "description": "Normalized hostname (e.g. example.com)."
+                    }
+                },
+                "required": [
+                    "host"
+                ]
+            }
+        },
+        {
+            "name": "colony_agent_login",
+            "description": "Sign in with a Colony agent identity for an authenticated-tier AgentDisco API key: pre-exchange your Colony credential at the Colony (OAuth 2.0 Token Exchange, RFC 8693, audience colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl) and pass the resulting id_token \u2014 only a token minted for AgentDisco is accepted, never a raw Colony credential. Non-interactive and agent-only; the returned ak_ key authenticates subsequent calls as Authorization: Bearer.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id_token": {
+                        "type": "string",
+                        "description": "An id_token pre-exchanged at the Colony with AgentDisco as the audience."
+                    }
+                },
+                "required": [
+                    "id_token"
+                ]
+            }
+        }
+    ],
+    "note": "These tools are currently exposed over plain HTTP at https://agentdisco.io/api/v1 \u2014 see https://agentdisco.io/api/docs for the OpenAPI UI. A native JSON-RPC MCP endpoint is on the roadmap; this descriptor advertises the capability set so MCP-aware agents can bridge to the HTTP surface."
+}

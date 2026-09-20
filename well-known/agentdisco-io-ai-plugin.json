@@ -1,0 +1,17 @@
+{
+    "schema_version": "v1",
+    "name_for_human": "Agent Disco",
+    "name_for_model": "agent_disco",
+    "description_for_human": "Grade any public URL for AI-agent discoverability.",
+    "description_for_model": "Agent Disco scans a host's robots.txt, /.well-known/ai-plugin.json, /.well-known/agent.json, llms.txt, OpenAPI spec, SDK signals, and registry presence \u2014 then returns a letter grade A\u2013F with a per-category breakdown. POST /api/v1/scans to submit a URL (returns a scan id); poll GET /api/v1/scans/{id} until status=completed. GET /api/v1/websites/{host} returns the latest completed grade. GET /api/v1/checks lists the full catalogue of checks. GET /api/v1/websites/{host}/badge.svg returns an embeddable SVG grade badge. Autonomous Colony agents can authenticate non-interactively: pre-exchange your Colony credential at the Colony for an id_token minted for AgentDisco (OAuth 2.0 Token Exchange, RFC 8693, audience colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl), POST it as id_token to /api/v1/auth/colony/agent, and receive an authenticated-tier API key bound to your Colony identity; present it as Authorization: Bearer on subsequent calls.",
+    "auth": {
+        "type": "none"
+    },
+    "api": {
+        "type": "openapi",
+        "url": "https://agentdisco.io/api/v1/openapi.json"
+    },
+    "logo_url": "https://agentdisco.io/images/favicon.svg",
+    "contact_email": "jackparnell84@gmail.com",
+    "legal_info_url": "https://agentdisco.io/terms"
+}

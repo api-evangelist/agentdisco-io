@@ -1,0 +1,45 @@
+generated: '2026-09-19'
+method: searched
+source: https://agentdisco.io/api/v1/openapi.json
+docs: https://agentdisco.io/llms.txt
+summary: >-
+  Agent Disco ships no JavaScript component library. Its one embeddable surface is a hosted grade badge -
+  a Shields.io-style SVG (or PNG) rendered from a host's latest completed scan and embedded by URL on a
+  third-party site, with published staleness and caching rules. The report page is a hosted, non-embeddable
+  surface.
+components: []
+hosted_surfaces:
+- family: badge
+  name: Grade badge (SVG)
+  url: https://agentdisco.io/api/v1/websites/{host}/badge.svg
+  operation: get_api_website_badge
+  format: image/svg+xml
+  embeddable: true
+  official: true
+  auth: none
+  detail: >-
+    Shows the letter grade, score and scan age. Fades to grey once the scan is older than the staleness
+    window (agent_disco.badge_stale_days, default 30). With `?strict=1` a stale badge returns 410 Gone
+    instead, so a CI badge can fail visibly. Served with Cache-Control and an ETag (304 on If-None-Match);
+    404 when the host has no completed scan, 410 when the latest scan failed or the host was unlisted.
+  a2a_skill: embed-badge
+- family: badge
+  name: Grade badge (PNG)
+  url: https://agentdisco.io/api/v1/websites/{host}/badge.png
+  operation: get_api_website_badge_png
+  format: image/png
+  embeddable: true
+  official: true
+  auth: none
+  detail: Identical content, staleness and caching rules to badge.svg, for embedders that cannot render SVG.
+- family: report
+  name: Public report page
+  url: https://agentdisco.io/report/{host}
+  embeddable: false
+  detail: Human-readable grade, per-category breakdown, fix hints, grade-change alert subscription and auto-rescan cadence controls; noindex and robots-disallowed (/report/). Linked from every scan as resultUrl.
+- family: scanner
+  name: Scan form
+  url: https://agentdisco.io/
+  embeddable: false
+  detail: The website's submit-a-URL form; the equivalent of POST /api/v1/scans for humans.
+loaders: []

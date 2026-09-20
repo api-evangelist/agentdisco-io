@@ -1,0 +1,105 @@
+generated: '2026-09-19'
+method: derived
+source: >-
+  Derived from the 20 components.schemas and the path structure of openapi/agentdisco-io-openapi.yml
+  (OpenAPI 3.1.0, harvested from https://agentdisco.io/api/v1/openapi.json): schema $ref links
+  (ScanDetailResponse.findings -> FindingResponse, ScanHistoryResponse.scans -> ScanSummaryResponse,
+  UnlistRequestResponse.dns_record -> UnlistDnsRecord), reference fields (host, checkKey, statusUrl,
+  scanId/previousScanId) and the nesting of the /websites/{host}/... and /scans/{id}/... paths. The
+  Account entity is implied by the "account-bound key" language on the keys and webhooks operations
+  and the webhook payload on https://agentdisco.io/developers.
+docs: https://agentdisco.io/developers
+notation: >-
+  Scans, keys and webhooks are addressed by UUID (scan ids are UUIDv7 per the developers page, so the
+  embedded timestamp doubles as a replay-window signal for webhook receivers); a Website is addressed by
+  its normalised host; a Check by a stable dotted key such as crawl.robots_txt. Relationships use has_one /
+  has_many / belongs_to with the reference field in `via`.
+entities:
+- name: Website
+  id: host (normalised hostname)
+  schema: WebsiteResponse
+  domain: core
+  description: >-
+    A scanned host with its latest grade/score, last-scan time, scan count and a visibility of listed|unlisted.
+- name: Scan
+  id: uuid (UUIDv7)
+  schema: ScanDetailResponse
+  summary_schema: ScanSummaryResponse
+  accepted_schema: ScanAcceptedResponse
+  domain: core
+  description: >-
+    One grading run of a host - status queued|running|completed|failed|cancelled, phase passive|active, requestedUrl, score 0-100, grade A-F, summary and findings.
+- name: Finding
+  id: uuid
+  schema: FindingResponse
+  domain: core
+  description: >-
+    The result of one check inside one scan - status pass|fail|warn|skip|error, pointsEarned/pointsPossible (null when skipped or errored), notes, evidence, durationMs.
+- name: Check
+  id: key (e.g. crawl.robots_txt)
+  schema: CheckResponse
+  domain: catalogue
+  description: >-
+    A published discoverability check with label, category, weight and phase; the catalogue the grade is summed from.
+- name: ScanDiff
+  id: scanId
+  schema: ScanDiffResponse
+  domain: core
+  description: >-
+    The delta between a scan and the previous completed scan of the same host - grade/score from/to, scoreDelta, newFailures, newPasses.
+- name: Account
+  id: implied
+  domain: identity
+  description: >-
+    The owner of account-bound keys and webhooks; created by signing in on the website or by a Colony agent sign-in. Not directly addressable in the API.
+- name: ApiKey
+  id: uuid
+  schema: ApiKeySummaryResponse
+  created_schema: CreateApiKeyResponse
+  domain: identity
+  description: >-
+    A bearer credential (token prefix ak_, plaintext shown once) with a rateLimitTier of anonymous|authenticated, an optional label, lastUsedAt and an active flag.
+- name: Webhook
+  id: uuid
+  schema: WebhookResponse
+  created_schema: WebhookCreatedResponse
+  domain: events
+  description: >-
+    An https receiver for one host's scan.completed events, with an HMAC-SHA256 secret shown once, consecutiveFailures (auto-pause at 5), lastSucceededAt, lastFailedAt.
+- name: Badge
+  id: host
+  domain: render
+  description: >-
+    The SVG/PNG grade badge rendered from a Website's latest completed scan; not stored as a resource, served with ETag and a 30-day staleness rule.
+- name: UnlistToken
+  id: token (32 hex)
+  schema: UnlistRequestResponse
+  record_schema: UnlistDnsRecord
+  domain: listing
+  description: >-
+    A one-off DNS-TXT verification token (expires_in_seconds, default 86400) that flips a Website's visibility when found at _agentdisco-verify.<host>.
+- name: OpsVersion
+  schema: OpsVersionResponse
+  domain: ops
+  description: >-
+    The deployed release tag, commit SHA and deploy time; operator-only behind HTTP Basic.
+relationships:
+- {from: Website, to: Scan, kind: has_many, via: '/websites/{host}/scans (ScanHistoryResponse.scans)'}
+- {from: Scan, to: Website, kind: belongs_to, via: host}
+- {from: Scan, to: Finding, kind: has_many, via: findings}
+- {from: Finding, to: Check, kind: belongs_to, via: checkKey}
+- {from: Scan, to: ScanDiff, kind: has_one, via: '/scans/{id}/diff'}
+- {from: ScanDiff, to: Scan, kind: belongs_to, via: previousScanId}
+- {from: Website, to: Badge, kind: has_one, via: '/websites/{host}/badge.svg'}
+- {from: Website, to: Webhook, kind: has_many, via: host}
+- {from: Webhook, to: Account, kind: belongs_to, via: account-bound bearer key}
+- {from: Account, to: ApiKey, kind: has_many, via: /keys}
+- {from: Webhook, to: Scan, kind: notified_by, via: scan.completed payload (scan.id, scan.host, statusUrl)}
+- {from: Website, to: UnlistToken, kind: has_one, via: '/websites/{host}/unlist'}
+- {from: ScanSummaryResponse, to: Scan, kind: links_to, via: 'statusUrl (/api/v1/scans/{id})'}
+state_machines:
+  scan.status: [queued, running, completed, failed, cancelled]
+  scan.phase: [passive, active]
+  finding.status: [pass, fail, warn, skip, error]
+  website.visibility: [listed, unlisted]
+  apikey.rateLimitTier: [anonymous, authenticated]

@@ -1,0 +1,100 @@
+generated: '2026-09-19'
+method: searched
+source: https://agentdisco.io/developers
+docs:
+- https://agentdisco.io/developers
+- https://agentdisco.io/terms
+- https://agentdisco.io/api/v1/openapi.json
+- https://agentdisco.io/bot
+limit_count: 8
+summary: >-
+  Eight published numeric limits, all quota-shaped (per day, hour or minute) rather than requests-per-second,
+  keyed on client IP for anonymous callers and on the ak_ key or account once authenticated. Exhaustion is a
+  429 with the JSON {error, message} envelope. No RateLimit-*, X-RateLimit-* or Retry-After header is
+  documented, and none was observed on anonymous 200 responses from GET /api/v1/checks or GET
+  /api/v1/websites/{host} on 2026-09-19. A 429 was not provoked deliberately (doing so would consume the
+  provider's quota), so the exhaustion body slug is unobserved.
+rate_limits:
+- name: Anonymous scans
+  scope: per-ip
+  limit: 10
+  window: 1 day (rolling 24-hour window per the terms)
+  metric: scans
+  burst: null
+  applies_to: ['POST /api/v1/scans', 'POST /api/v1/websites/{host}/rescan']
+  source: https://agentdisco.io/developers
+- name: Keyed scans (anonymous-tier ak_ key)
+  scope: per-key
+  limit: 100
+  window: 1 day
+  metric: scans
+  burst: null
+  applies_to: ['POST /api/v1/scans', 'POST /api/v1/websites/{host}/rescan']
+  source: https://agentdisco.io/developers
+- name: Authenticated scans (account-bound ak_ key)
+  scope: per-key
+  limit: 500
+  window: 1 day
+  metric: scans
+  burst: null
+  applies_to: ['POST /api/v1/scans', 'POST /api/v1/websites/{host}/rescan']
+  source: https://agentdisco.io/developers
+- name: API key mints
+  scope: per-ip
+  limit: 5
+  window: 1 hour
+  metric: key creations
+  burst: null
+  applies_to: [POST /api/v1/keys]
+  source: https://agentdisco.io/developers
+  note: '"enough to recover from a lost token, tight enough that hoarding across the anonymous quota isn''t practical"'
+- name: Webhook creation
+  scope: per-account
+  limit: 5
+  window: 1 hour
+  metric: webhook registrations
+  burst: null
+  applies_to: [POST /api/v1/webhooks]
+  source: https://agentdisco.io/api/v1/openapi.json
+  note: Shared with the web form in the account page.
+- name: Unlist / relist requests
+  scope: per-ip
+  limit: 1
+  window: 1 hour
+  metric: verification requests
+  burst: null
+  applies_to: ['POST /api/v1/websites/{host}/unlist', 'POST /api/v1/websites/{host}/unlist/confirm', 'POST /api/v1/websites/{host}/relist']
+  source: https://agentdisco.io/api/v1/openapi.json
+- name: Website deletion
+  scope: per-ip
+  limit: 1
+  window: 1 minute
+  metric: deletions
+  burst: null
+  applies_to: ['DELETE /api/v1/websites/{host}']
+  source: https://agentdisco.io/api/v1/openapi.json
+- name: Scanner politeness toward the scanned host
+  scope: per-target-host (outbound)
+  limit: 2
+  window: 1 second
+  metric: requests the scanner sends to the site being graded
+  burst: null
+  applies_to: [scan execution]
+  source: https://agentdisco.io/bot
+  note: A limit Agent Disco imposes on itself toward third-party origins (10-20 requests per scan), not a limit on API callers; included because it is published and agents scanning their own fleet will see it in their logs.
+undocumented:
+- name: Colony agent sign-in attempts
+  scope: per-ip
+  limit: null
+  window: null
+  applies_to: [POST /api/v1/auth/colony/agent]
+  source: https://agentdisco.io/api/v1/openapi.json
+  note: Declares 429 "Too many attempts from this IP" with no number.
+headers:
+  observed: []
+  documented: []
+  exhaustion_status: 429
+  exhaustion_body: '{"error": "<slug>", "message": "..."}'
+  retry_after: not documented
+responseCodes:
+  throttled: 429

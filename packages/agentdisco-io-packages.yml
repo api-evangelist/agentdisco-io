@@ -1,0 +1,37 @@
+generated: '2026-09-19'
+method: searched
+source: https://agentdisco.io/developers
+description: >-
+  First-party client libraries for the Agent Disco API. The developers page publishes exactly one - a Python
+  client on PyPI, MIT licensed, with the source in the agentdisco GitHub organisation (whose profile links
+  back to https://agentdisco.io/) - and says "more languages follow". Registry metadata read 2026-09-19 from
+  pypi.org/pypi/agentdisco/json. npm (agentdisco, agentdisco-sdk, @agentdisco/sdk), RubyGems, crates.io and
+  Packagist all return 404 for the name. The PyPI project_urls Repository field points at
+  github.com/StarsolLtd/agent-disco, which returns 404 (private or nonexistent); the public source is the
+  agentdisco/agentdisco-python-sdk repository the developers page links.
+packages:
+- language: python
+  registry: pypi
+  name: agentdisco
+  url: https://pypi.org/project/agentdisco/
+  source: https://github.com/agentdisco/agentdisco-python-sdk
+  install: pip install agentdisco
+  official: true
+  license: MIT
+  version: 0.4.0
+  published: '2026-07-20'
+  first_published: '2026-04-24'
+  releases: {'0.1.0': '2026-04-24', '0.2.0': '2026-06-25', '0.3.0': '2026-06-25', '0.4.0': '2026-07-20'}
+  requires_python: '>=3.9'
+  clients: [AgentDisco (sync), AsyncAgentDisco (asyncio)]
+  methods: [submit_scan, get_scan, mint_key, get_website, get_scans, rescan, from_colony_token, exchange_colony_token]
+  registry_status: 200
+  note: >-
+    Wraps the /api/v1 REST surface; v0.4.0 added running the RFC 8693 token exchange at the Colony so the raw
+    Colony credential never reaches Agent Disco. The API spec is info.version 1.0.0 and the SDK's last release
+    (2026-07-20) postdates the API's public launch (terms dated 2026-04-21), so no abandonment signal.
+not_found:
+- {registry: npm, names: [agentdisco, agentdisco-sdk, '@agentdisco/sdk'], status: 404}
+- {registry: rubygems, names: [agentdisco], status: 404}
+- {registry: crates, names: [agentdisco], status: 404}
+- {registry: packagist, names: [agentdisco/agentdisco], status: 404}

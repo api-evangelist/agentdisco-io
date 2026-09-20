@@ -1,0 +1,93 @@
+generated: '2026-09-19'
+method: searched
+probe: true
+source: https://agentdisco.io/privacy
+signals:
+  data_subject_request:
+    url: https://agentdisco.io/privacy
+    section: '6. Your Rights'
+    channel: https://agentdisco.io/contact (web form)
+    api: https://agentdisco.io/api/v1/websites/{host}
+    api_operation: delete_api_website_delete (DELETE, unauthenticated, 1/minute per IP, 204)
+    rights_named: [access, rectification, erasure, objection to legitimate-interest processing, portability in a machine-readable format, complaint to the UK ICO]
+    controller: Starsol Ltd (company 06002018), ICO registration ZA083698
+    escalation: UK Information Commissioner's Office (ico.org.uk)
+    evidence:
+    - source: https://agentdisco.io/privacy
+      http_status: 200
+      fetched: '2026-09-19'
+      quote: >-
+        "Request erasure ("right to be forgotten"). For scan records, the public endpoint DELETE
+        /api/v1/websites/{host} lets you remove a host's scan history self-service; for IP-address log data,
+        use our contact form."
+    - source: https://agentdisco.io/api/v1/openapi.json
+      http_status: 200
+      fetched: '2026-09-19'
+      quote: '"Right-to-delete (GDPR-style). Removes the Website row plus every Scan + Finding under it, then invalidates the badge cache. Unauthenticated for MVP but rate-limited at 1/min per IP."'
+    note: >-
+      A documented rights process with a channel AND a real, documented API endpoint for the erasure right -
+      one of very few providers where the DSR path is machine-callable. No stated response SLA; no dedicated
+      /privacy/requests page (404).
+  data_residency:
+    url: https://agentdisco.io/privacy
+    section: '8. International Transfers'
+    regions: [uk]
+    configurable: false
+    evidence:
+    - source: https://agentdisco.io/privacy
+      http_status: 200
+      fetched: '2026-09-19'
+      quote: >-
+        "Data is stored in the United Kingdom. Where a processor is located outside the UK or the European
+        Economic Area, we rely on UK International Data Transfer Agreements or equivalent safeguards."
+    note: >-
+      A published statement of where data is stored (UK) and the transfer mechanism used otherwise (UK
+      IDTA). It is a policy statement, not a region a customer selects; recorded as a residency signal on
+      that basis.
+probed_absent:
+- signal: sbom
+  urls:
+  - {url: https://agentdisco.io/security/sbom, status: 404}
+  - {url: https://agentdisco.io/security, status: 404}
+  note: No bill of materials published. Never derived - search only.
+- signal: support_lifetime
+  urls:
+  - {url: https://agentdisco.io/changelog, status: 404}
+  note: No versioning or support-period page; the API is a single v1 with no stated support commitment.
+- signal: accessibility_conformance
+  urls:
+  - {url: https://agentdisco.io/accessibility, status: 404}
+  note: No accessibility statement or VPAT.
+- signal: subprocessors
+  urls:
+  - {url: https://agentdisco.io/legal/subprocessors, status: 404}
+  - {url: https://agentdisco.io/privacy, status: 200}
+  note: >-
+    Privacy section 7 names processor CATEGORIES only ("our hosting provider (cPanel-hosted Apache), our
+    domain registrar, and our email provider") with no vendor names, locations or date - below the bar of a
+    named, dated subprocessor list, so not recorded as a signal.
+- signal: incident_notification
+  urls:
+  - {url: https://agentdisco.io/legal/dpa, status: 404}
+  note: No DPA and no breach-notification SLA published.
+- signal: ai_transparency
+  urls:
+  - {url: https://agentdisco.io/humans.txt, status: 200}
+  note: humans.txt credits "Claude (Disty) - co-author" of the site; a build credit, not a transparency statement about AI use toward users. Not recorded.
+- signal: training_data_summary
+  urls: [{url: https://agentdisco.io/privacy, status: 200}]
+  note: The service runs no model; nothing to publish.
+- signal: global_privacy_control
+  urls: [{url: https://agentdisco.io/privacy, status: 200}]
+  note: The policy states no analytics, marketing cookies or trackers are used, but makes no GPC statement. honored is not set.
+- signal: transparency_report
+  urls: [{url: https://agentdisco.io/transparency, status: 404}]
+- signal: notice_and_action
+  urls: [{url: https://agentdisco.io/legal/report-content, status: 404}]
+  note: The DNS-verified unlist flow (POST /api/v1/websites/{host}/unlist) lets a site OWNER remove their listing; it is not a third-party notice-and-action channel.
+- signal: age_assurance
+  urls: [{url: https://agentdisco.io/terms, status: 200}]
+  note: No age signal published.
+- signal: exit_assistance
+  urls: [{url: https://agentdisco.io/privacy, status: 200}]
+  note: Portability is named as a right in section 6 but there is no export tooling or switching guidance.

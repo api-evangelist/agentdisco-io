@@ -1,0 +1,50 @@
+generated: '2026-09-19'
+method: searched
+source: https://agentdisco.io/developers
+docs:
+- https://agentdisco.io/developers
+- https://agentdisco.io/terms
+- https://agentdisco.io/llms-full.txt
+plan_count: 3
+currency: null
+model: free service with three quota tiers keyed on how you authenticate; no paid plan is published
+summary: >-
+  Agent Disco publishes no prices: /pricing returns the site 404 and the terms (section 3) say only that
+  "higher limits will be available through authenticated API keys in a future release". What it does
+  publish, on /developers, is three access tiers distinguished solely by daily scan quota and how the
+  credential is obtained. Recorded as tiers with a null price rather than omitted, because the quotas are
+  the plan structure an agent must choose between.
+plans:
+- id: anonymous
+  name: Anonymous
+  price: 0
+  currency: null
+  period: null
+  credential: none
+  included: 10 scans per day per client IP
+  overage: none - 429 until the rolling window resets
+  limits: ['10 scans / day / IP', 'cannot own webhooks or list keys']
+  source: https://agentdisco.io/developers
+- id: keyed
+  name: Keyed (anonymous API key)
+  price: 0
+  currency: null
+  period: null
+  credential: 'ak_ key minted by POST /api/v1/keys - "No account, no email - just click the button"'
+  included: 100 scans per day per key
+  overage: none - 429 until the window resets
+  limits: ['100 scans / day / key', 'key mints capped at 5 / hour / IP', 'rateLimitTier anonymous - cannot own webhooks']
+  source: https://agentdisco.io/developers
+- id: authenticated
+  name: Authenticated (signed-in)
+  price: 0
+  currency: null
+  period: null
+  credential: 'ak_ key bound to an account - website sign-in, or non-interactive Colony agent sign-in via POST /api/v1/auth/colony/agent'
+  included: 500 scans per day per key
+  overage: none - 429 until the window resets
+  limits: ['500 scans / day / key', 'webhook creation 5 / hour / account', 'keys and webhooks are account-scoped']
+  source: https://agentdisco.io/developers
+free_tier: true
+paid_plans_published: false
+enterprise_contact: null

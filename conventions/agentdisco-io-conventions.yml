@@ -1,0 +1,145 @@
+generated: '2026-09-19'
+method: searched
+source: >-
+  https://agentdisco.io/developers, https://agentdisco.io/llms-full.txt, https://agentdisco.io/privacy and
+  the operation descriptions in openapi/agentdisco-io-openapi.yml (harvested from
+  https://agentdisco.io/api/v1/openapi.json); response headers observed live on anonymous GETs to
+  /api/v1/checks, /api/v1/websites/anthropic.com, /api/v1/webhooks (401) and /api/v1/ops/version (401) on
+  2026-09-19.
+description: >-
+  How the Agent Disco REST API behaves across every operation: bearer-key authentication with three quota
+  tiers, no idempotency mechanism, offset pagination on scan history, no request-id tracing, path
+  versioning, a two-field JSON error envelope, 429 quota signalling without headers, and the reversal paths
+  an agent has (revoke, delete, unlist/relist) versus the ones it does not (a scan cannot be cancelled, a
+  website delete cannot be restored).
+
+base_url: https://agentdisco.io
+api_style: REST over HTTPS, JSON requests and responses, all paths prefixed /api/v1
+
+authentication:
+  scheme: 'HTTP Bearer, token prefix ak_ (Authorization: Bearer ak_...)'
+  tiers:
+  - {tier: anonymous, credential: none, quota: 10 scans/day per IP}
+  - {tier: keyed, credential: 'ak_ key minted by POST /api/v1/keys (no account)', quota: 100 scans/day per key}
+  - {tier: authenticated, credential: 'ak_ key bound to an account (website sign-in or Colony agent sign-in)', quota: 500 scans/day per key}
+  operator_only: HTTP Basic (realm "ops") on /api/v1/ops/*
+  agent_sign_in: POST /api/v1/auth/colony/agent with an RFC 8693 id_token minted at https://thecolony.ai for audience colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl
+  docs: https://agentdisco.io/developers
+  detail: authentication/agentdisco-io-authentication.yml
+
+idempotency:
+  supported: false
+  coverage: none
+  mechanism: null
+  scope: []
+  detail: >-
+    No Idempotency-Key header, no client-supplied request id, and no documented replay semantics on any
+    write. POST /api/v1/scans queues a new scan on every call and each counts against the quota. The only
+    idempotency statement in the spec is on DELETE /api/v1/keys/{id} ("Idempotent" - revoking an already
+    revoked key returns 200), which is natural DELETE semantics, not replay protection for creates. An agent
+    retrying a timed-out POST /scans should expect a second scan.
+  docs: null
+
+reversibility:
+  grade: documented
+  write_surface:
+  - post_api_scan_create (queues a scan)
+  - post_api_website_rescan (queues a scan)
+  - post_api_key_create (mints a key)
+  - post_api_colony_agent_login (mints a key)
+  - post_api_webhook_create (registers a receiver)
+  - post_api_website_unlist_request / post_api_website_unlist_confirm (hides a host)
+  - delete_api_website_delete (destroys a host and its history)
+  reversal_operations:
+  - {action: mint a key, reversal: delete_api_key_revoke, window: 'none stated; "a revoked key immediately drops to the anonymous rate limit"', source: https://agentdisco.io/api/v1/openapi.json}
+  - {action: register a webhook, reversal: delete_api_webhook_delete, window: none stated, source: https://agentdisco.io/api/v1/openapi.json}
+  - {action: unlist a host, reversal: post_api_website_relist_request + post_api_website_relist_confirm (DNS-TXT verified), window: 'none stated for the reversal; each verification token is valid expires_in_seconds (example 86400)', source: https://agentdisco.io/bot}
+  irreversible:
+  - {action: submit or re-run a scan, note: 'the status enum includes cancelled but no cancel operation exists; a queued scan runs and counts against the quota'}
+  - {action: delete a website, note: 'DELETE /api/v1/websites/{host} removes the Website row plus every Scan and Finding and invalidates the badge cache; no restore, and the privacy policy frames it as right-to-delete'}
+  window: null
+  detail: >-
+    Reversal paths exist for three of the write surfaces (revoke key, delete webhook, relist host) and are
+    documented in the spec and on /bot, but no reversal WINDOW is stated anywhere, so the grade is
+    documented rather than verified. The destructive delete is deliberately unrecoverable.
+  source: https://agentdisco.io/api/v1/openapi.json
+
+dry_run_mode:
+  supported: false
+  detail: No test mode, sandbox host or dry-run flag is published; anonymous scans of any public host are the way to try the API (10/day per IP). See rate-limits.
+
+pagination:
+  style: offset (page number)
+  applies_to: [get_api_website_scans]
+  request_params:
+    page: 1-based page number (default 1)
+    perPage: page size, default 10, capped at 50
+  response_fields:
+    scans: array of ScanSummaryResponse, most-recent first
+    totalCount: total completed scans for the host across all pages
+    page: current page
+    perPage: page size in effect
+  docs: https://agentdisco.io/api/docs
+
+field_expansion:
+  supported: false
+  detail: Fixed response shapes; a scan's findings are always inlined on GET /api/v1/scans/{id}, and history entries link to detail via statusUrl.
+
+metadata:
+  supported: false
+  detail: Only an optional human `label` at key-mint time (echoed on ApiKeySummaryResponse); no free-form metadata on any object.
+
+request_id_tracing:
+  request_id_header: null
+  detail: >-
+    No request-id / trace header is returned (none observed on any response); Cloudflare's cf-ray is the
+    only correlator. Scan ids are UUIDv7, so every scan carries its own creation timestamp.
+
+versioning:
+  scheme: URL path (/api/v1)
+  current: v1
+  detail: lifecycle/agentdisco-io-lifecycle.yml
+
+error_envelope:
+  media_type: application/json
+  shape: '{ "error": "<slug>", "message": "<human explanation>" }'
+  observed_slugs: [not_found, unauthorized]
+  text_plain_exceptions: badge.svg / badge.png return text/plain on 404 and 410
+  detail: errors/agentdisco-io-problem-types.yml
+
+rate_limit_signaling:
+  exhaustion_status: 429
+  body: ErrorResponse JSON
+  headers_documented: []
+  headers_observed: []
+  retry_after: not documented
+  detail: rate-limits/agentdisco-io-rate-limits.yml
+
+caching:
+  etag: GET /api/v1/checks and both badge endpoints return an ETag and honour If-None-Match (304)
+  cache_control_observed:
+    /api/v1/checks: 'max-age=300, public, stale-while-revalidate=3600'
+    /api/v1/auth/colony/agent: 'max-age=3600, public'
+    /.well-known/agent.json: 'max-age=3600, public, stale-while-revalidate=86400'
+    /api/v1/websites/{host}: 'no-cache, private'
+
+cors:
+  access_control_allow_origin: '*'
+  observed_on: ['/api/v1/checks', '/api/v1/websites/{host}', '/.well-known/agent.json']
+
+async_pattern:
+  detail: >-
+    POST /api/v1/scans and /rescan return 202 with {id, status, statusUrl, resultUrl}; poll GET
+    /api/v1/scans/{id} until status is completed or failed (typically under a minute), or register a
+    webhook for scan.completed. See asyncapi/agentdisco-io-webhooks.yml.
+
+content_types:
+  request: application/json
+  response: application/json (image/svg+xml and image/png for badges)
+
+related:
+  authentication: authentication/agentdisco-io-authentication.yml
+  errors: errors/agentdisco-io-problem-types.yml
+  lifecycle: lifecycle/agentdisco-io-lifecycle.yml
+  rate_limits: rate-limits/agentdisco-io-rate-limits.yml
+  webhooks: asyncapi/agentdisco-io-webhooks.yml

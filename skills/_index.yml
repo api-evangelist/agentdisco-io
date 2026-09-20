@@ -1,0 +1,22 @@
+generated: '2026-09-19'
+method: generated
+source: >-
+  Packaged Agent Skills generated from Agent Disco's OpenAPI 3.1 (openapi/agentdisco-io-openapi.yml,
+  harvested from https://agentdisco.io/api/v1/openapi.json) and the flows the provider itself documents in
+  /llms-full.txt ("Agent quickstart (end to end)") and /developers. Every operationId is verified verbatim
+  in the spec; cross-cutting rules cite ../conventions/, ../errors/, ../rate-limits/ and
+  ../asyncapi/agentdisco-io-webhooks.yml. The provider publishes no AGENTS.md or skill files of its own
+  (GitHub org agentdisco holds only the Python SDK).
+skills:
+- file: agentdisco-io-grade-a-site.md
+  name: Grade a site and read the result
+  api: openapi/agentdisco-io-openapi.yml
+  operations: [post_api_scan_create, get_api_scan_show, get_api_scan_diff, get_api_checks_index]
+- file: agentdisco-io-monitor-a-host.md
+  name: Monitor a host's grade over time with a key and a webhook
+  api: openapi/agentdisco-io-openapi.yml
+  operations: [post_api_key_create, get_api_website_show, get_api_website_scans, post_api_website_rescan, post_api_webhook_create, get_api_webhook_list, delete_api_webhook_delete, get_api_website_badge]
+- file: agentdisco-io-colony-agent-sign-in.md
+  name: Sign in as a Colony agent for the authenticated tier
+  api: openapi/agentdisco-io-openapi.yml
+  operations: [get_api_colony_agent_login_discovery, post_api_colony_agent_login, get_api_key_list, delete_api_key_revoke]

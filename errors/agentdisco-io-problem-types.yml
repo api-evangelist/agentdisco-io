@@ -1,0 +1,93 @@
+generated: '2026-09-19'
+method: derived
+format: custom-json
+rfc9457: false
+source: >-
+  Derived from the 4xx/5xx responses declared in openapi/agentdisco-io-openapi.yml (OpenAPI 3.1.0, 25
+  operations, harvested from https://agentdisco.io/api/v1/openapi.json) and enriched with two error bodies
+  observed live on 2026-09-19 (an unrouted path and an unauthenticated account-scoped read). The API does
+  not use RFC 9457 application/problem+json; every declared JSON error uses the single ErrorResponse
+  schema. The two badge endpoints return text/plain on 404/410.
+envelope:
+  media_type: application/json
+  schema: ErrorResponse
+  shape: '{ "error": string, "message": string }'
+  fields:
+  - {name: error, type: string, required: true, description: 'Short machine-readable slug, e.g. "invalid_url" or "not_found".'}
+  - {name: message, type: string, required: true, description: Human-readable explanation.}
+  observed:
+  - status: 404
+    url: https://agentdisco.io/api/v1/nope
+    body: '{"error":"not_found","message":"No route found for \"GET https://agentdisco.io/api/v1/nope\""}'
+    note: unrouted paths under /api/v1 return the JSON envelope, not the HTML 404 page
+  - status: 401
+    url: https://agentdisco.io/api/v1/webhooks
+    body: '{"error":"unauthorized","message":"Present an account-bound API key as `Authorization: Bearer ak_...`. Anonymous keys can''t own webhooks."}'
+  - status: 401
+    url: https://agentdisco.io/api/v1/ops/version
+    body: '{"error":"unauthorized","message":"HTTP Basic auth required."}'
+    headers:
+    - 'WWW-Authenticate: Basic realm="ops"'
+problems:
+- status: 400
+  title: Bad Request
+  media_type: application/json
+  meaning: >-
+    Request failed validation - the scan URL failed validation (post_api_scan_create, post_api_website_rescan
+    re-validating the stored canonical URL), the id_token is missing (post_api_colony_agent_login), webhook
+    fields are missing or the receiver URL is non-https or SSRF-blocked (post_api_webhook_create), or the
+    unlist/relist token is missing, mismatched, or the _agentdisco-verify TXT record was not found.
+  remediation: Read `message`; correct the URL, supply the missing field, use an https receiver, or publish the TXT record and retry.
+  declared_on: [post_api_scan_create, post_api_colony_agent_login, post_api_webhook_create, post_api_website_rescan, post_api_website_unlist_confirm, post_api_website_relist_confirm]
+- status: 401
+  title: Unauthorized
+  media_type: application/json
+  slug_observed: unauthorized
+  meaning: >-
+    No account-bound API key was presented on an account-scoped operation (keys, webhooks), the Colony
+    id_token failed verification (invalid/expired, wrong audience, or a non-agent subject), or HTTP Basic
+    credentials are missing on the operator-only /ops endpoints.
+  remediation: 'Send `Authorization: Bearer ak_...` with an account-bound key; for Colony sign-in re-run the RFC 8693 exchange with AgentDisco as audience; /ops is operator-only.'
+  declared_on: [get_api_key_list, delete_api_key_revoke, post_api_colony_agent_login, get_api_ops_check_health, get_api_ops_version, get_api_webhook_list, post_api_webhook_create, delete_api_webhook_delete]
+- status: 404
+  title: Not Found
+  media_type: application/json (text/plain on badge endpoints)
+  slug_observed: not_found
+  meaning: >-
+    Unknown scan id, unknown host (never scanned), a key or webhook that does not exist OR belongs to another
+    account (deliberately indistinguishable so ids cannot be probed), a host with no completed scan (badges),
+    or Colony login not enabled on the deployment.
+  remediation: Confirm the id/host; a webhook can only be registered for a host that has already been scanned.
+  declared_on: [delete_api_key_revoke, get_api_website_badge, get_api_website_badge_png, get_api_colony_agent_login_discovery, post_api_colony_agent_login, get_api_ops_version, get_api_scan_show, get_api_scan_diff, post_api_website_unlist_request, post_api_website_unlist_confirm, post_api_website_relist_request, post_api_website_relist_confirm, post_api_webhook_create, delete_api_webhook_delete, get_api_website_show, delete_api_website_delete, get_api_website_scans, post_api_website_rescan]
+- status: 410
+  title: Gone (badge)
+  media_type: text/plain
+  meaning: >-
+    The host's latest scan failed, the host was unlisted, or the scan is older than the staleness window
+    (default 30 days) and the embedder sent `?strict=1`.
+  remediation: Queue a fresh scan (post_api_website_rescan) or drop `?strict=1` to receive the greyed stale badge instead.
+  declared_on: [get_api_website_badge, get_api_website_badge_png]
+- status: 429
+  title: Too Many Requests
+  media_type: application/json
+  meaning: >-
+    A quota was exhausted - scans (10/day per IP anonymous, 100/day per key, 500/day authenticated), key
+    mints (5/hour per IP), Colony sign-in attempts, unlist/relist requests (1/hour per IP), webhook creation
+    (5/hour per account) or website deletion (1/minute per IP). No Retry-After header is documented.
+  remediation: Mint or present an ak_ key to move from the per-IP to the per-key bucket; otherwise wait for the window. See rate-limits/agentdisco-io-rate-limits.yml.
+  declared_on: [post_api_key_create, post_api_colony_agent_login, post_api_scan_create, post_api_website_unlist_request, post_api_website_unlist_confirm, post_api_website_relist_request, post_api_webhook_create, delete_api_website_delete, post_api_website_rescan]
+non_error_statuses_of_note:
+- status: 202
+  meaning: scan accepted and queued; poll statusUrl until status=completed
+  declared_on: [post_api_scan_create, post_api_website_rescan]
+- status: 204
+  meaning: website and all its scans removed
+  declared_on: [delete_api_website_delete]
+- status: 304
+  meaning: ETag matched (If-None-Match)
+  declared_on: [get_api_checks_index, get_api_website_badge, get_api_website_badge_png]
+notes:
+- The spec declares no 5xx responses on any operation; treat any 5xx as transport/gateway level (Cloudflare fronts the origin).
+- >-
+  Clients must not parse these as RFC 9457 problem documents: there is no `type` URI, `title` or `detail`;
+  the discriminator is the flat `error` slug.

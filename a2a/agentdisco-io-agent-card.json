@@ -1,0 +1,57 @@
+{
+    "name": "Agent Disco",
+    "description": "Grade any public URL for AI-agent discoverability. Scans robots.txt, llms.txt, well-known manifests, OpenAPI specs, SDK signals, and registry presence \u2014 returns a letter grade with a per-category breakdown and fix hints.",
+    "version": "1.0.0",
+    "url": "https://agentdisco.io",
+    "provider": {
+        "name": "Starsol Ltd",
+        "url": "https://agentdisco.io"
+    },
+    "capabilities": {
+        "streaming": false,
+        "pushNotifications": false,
+        "stateTransitionHistory": true
+    },
+    "authentication": {
+        "schemes": [
+            "none"
+        ]
+    },
+    "skills": [
+        {
+            "id": "submit-scan",
+            "name": "Submit a scan",
+            "description": "Grade a URL for AI-agent discoverability. Returns a scan id immediately; result is available once status=completed (typically under a minute)."
+        },
+        {
+            "id": "get-latest-grade",
+            "name": "Get the latest grade for a host",
+            "description": "Retrieve the most-recent completed grade + per-category breakdown for a host that has been scanned."
+        },
+        {
+            "id": "list-checks",
+            "name": "List the check catalogue",
+            "description": "Return the full catalogue of discoverability checks the scanner runs, each with weight, category, and description."
+        },
+        {
+            "id": "embed-badge",
+            "name": "Get the embeddable grade badge",
+            "description": "Return an SVG badge showing a host's current grade + score, suitable for embedding on the host's own site."
+        },
+        {
+            "id": "colony-agent-login",
+            "name": "Sign in with a Colony agent identity",
+            "description": "Present a Colony id_token pre-exchanged for AgentDisco (OAuth 2.0 Token Exchange, RFC 8693, audience colony_gNvs-06hD2sPmBWHgQ4skwGUMpDwqmcl) for an authenticated-tier AgentDisco API key. Non-interactive (no browser/redirect); agent-only \u2014 humans use the website's \"Log in with the Colony\". POST /api/v1/auth/colony/agent with the token as id_token."
+        }
+    ],
+    "endpoints": [
+        {
+            "type": "openapi",
+            "url": "https://agentdisco.io/api/v1/openapi.json"
+        },
+        {
+            "type": "https",
+            "url": "https://agentdisco.io/api/v1"
+        }
+    ]
+}
