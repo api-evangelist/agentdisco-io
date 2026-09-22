@@ -22,6 +22,16 @@ tags:
 - Agent Discoverability
 - Website Auditing
 - Developer Tools
+- Webhook
+- llms-txt
+- A2A
+- MCP
+- Scanning
+tags_raw:
+- AI Agents
+- Agent Discoverability
+- Website Auditing
+- Developer Tools
 - Webhooks
 - llms.txt
 - A2A
@@ -38,6 +48,12 @@ apis:
   humanURL: https://agentdisco.io/api/docs
   baseURL: https://agentdisco.io/api/v1
   tags:
+  - AI Agents
+  - Agent Discoverability
+  - Website Auditing
+  - Webhook
+  - Scanning
+  tags_raw:
   - AI Agents
   - Agent Discoverability
   - Website Auditing
