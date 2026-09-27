@@ -1,0 +1,37 @@
+{
+  "provider": "agentdisco-io",
+  "sources": [
+    "_original/agentdisco-io-openapi.json",
+    "agentdisco-io-openapi.yml"
+  ],
+  "outputs": [
+    "agentdisco-io-checks-api-openapi.yml",
+    "agentdisco-io-keys-api-openapi.yml",
+    "agentdisco-io-openapi-api-openapi.yml",
+    "agentdisco-io-ops-api-openapi.yml",
+    "agentdisco-io-scans-api-openapi.yml",
+    "agentdisco-io-unlist-api-openapi.yml",
+    "agentdisco-io-webhooks-api-openapi.yml",
+    "agentdisco-io-websites-api-openapi.yml"
+  ],
+  "archived": [
+    "archived openapi/agentdisco-io-openapi.yml"
+  ],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "agentdisco-io-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "agentdisco-io-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "tag 'Checks' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'Keys' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'OpenAPI' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'Ops' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'Scans' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'Unlist' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'Webhooks' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "tag 'Websites' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
+    "apis.yml register: written (+8 apis, 8 total)"
+  ],
+  "skipped": []
+}

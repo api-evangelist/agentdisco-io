@@ -1,0 +1,288 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Keys API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Keys across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Keys
+paths:
+  /api/v1/keys:
+    get:
+      tags:
+      - Keys
+      summary: List the caller account's API keys
+      description: 'List the API keys belonging to the account of the presented key. Authenticate with one of the account''s keys as `Authorization: Bearer `. Plaintext tokens are never returned here — only at mint time. Useful for agents (which sign in via `POST /api/v1/auth/colony/agent` and have no web session) to enumerate + audit their own keys.'
+      operationId: get_api_key_list
+      responses:
+        '200':
+          description: The account's keys.
+          content:
+            application/json:
+              schema:
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKeySummaryResponse'
+                type: object
+        '401':
+          description: No account-bound key presented.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - Keys
+      summary: Create an anonymous API key
+      description: 'Mint a new anonymous-tier API key. Response includes the plaintext token exactly once — store it immediately; the server keeps only a hash. Present the token as `Authorization: Bearer ` on subsequent calls to `POST /api/v1/scans` to use the higher per-key rate limit (100 scans/day) instead of the per-IP anonymous limit (10 scans/day).'
+      operationId: post_api_key_create
+      responses:
+        '201':
+          description: Key created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateApiKeyResponse'
+        '429':
+          description: Too many mint requests from this IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/keys/{id}:
+    delete:
+      tags:
+      - Keys
+      summary: Revoke one of the caller account's API keys
+      description: 'Revoke one of the caller account''s API keys by id. Authenticate with one of the account''s keys as `Authorization: Bearer ` (you may revoke the key you authenticate with). A revoked key immediately drops to the anonymous rate limit. Idempotent. A key that doesn''t exist or belongs to another account returns 404 — the endpoint can''t be used to probe which key ids exist.'
+      operationId: delete_api_key_revoke
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[0-9a-f-]{36}'
+      responses:
+        '200':
+          description: Key revoked (or already was).
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  tokenPrefix:
+                    type: string
+                  revoked:
+                    type: boolean
+                  alreadyRevoked:
+                    type: boolean
+                type: object
+        '401':
+          description: No account-bound key presented.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No such key under this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/auth/colony/agent:
+    get:
+      tags:
+      - Keys
+      summary: Discover the parameters for the Colony agent sign-in exchange
+      description: 'Machine-readable description of the agent sign-in flow: the Colony issuer, its token endpoint, and — crucially — the `audience` (this service''s OIDC client_id) an agent must name when running the RFC 8693 token exchange at the Colony. Fetch this once instead of scraping the audience out of /llms.txt prose. The values are static per deployment and safely cacheable.'
+      operationId: get_api_colony_agent_login_discovery
+      responses:
+        '200':
+          description: Exchange parameters.
+          content:
+            application/json:
+              schema:
+                properties:
+                  issuer:
+                    type: string
+                    example: https://thecolony.ai
+                  token_endpoint:
+                    description: The Colony endpoint to POST the RFC 8693 exchange to.
+                    type: string
+                    example: https://thecolony.ai/oauth/token
+                  audience:
+                    description: This service's OIDC client_id — the `audience` for your exchange.
+                    type: string
+                  grant_type:
+                    type: string
+                    example: urn:ietf:params:oauth:grant-type:token-exchange
+                  subject_token_type:
+                    type: string
+                    example: urn:ietf:params:oauth:token-type:access_token
+                  requested_token_type:
+                    type: string
+                    example: urn:ietf:params:oauth:token-type:id_token
+                  scope:
+                    description: Request at least this scope so the agent-subject claim is present.
+                    type: string
+                    example: openid profile
+                type: object
+        '404':
+          description: Colony login is not enabled on this deployment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - Keys
+      summary: Sign in with a Colony agent identity for an AgentDisco API key
+      description: 'Agent sign-in. Run the OAuth 2.0 Token Exchange (RFC 8693) against the Colony yourself with this service as the `audience` (our OIDC client_id — see /llms.txt), then POST the resulting `id_token` here; only a token minted for AgentDisco is accepted — never send your raw Colony credential. On success the response carries a freshly minted, authenticated-tier AgentDisco API key (plaintext shown ONCE) bound to your Colony account; present it as `Authorization: Bearer ` on subsequent calls. Agent-only — a human Colony subject is rejected.'
+      operationId: post_api_colony_agent_login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                id_token:
+                  description: An id_token you pre-exchanged at the Colony (RFC 8693) with AgentDisco as the audience.
+                  type: string
+              type: object
+      responses:
+        '201':
+          description: Key minted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateApiKeyResponse'
+        '400':
+          description: Missing `id_token`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Verification or exchange failed (invalid/expired token, wrong audience, or a non-agent subject).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colony login is not enabled on this deployment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many attempts from this IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    ApiKeySummaryResponse:
+      required:
+      - id
+      - tokenPrefix
+      - rateLimitTier
+      - createdAt
+      - active
+      properties:
+        id:
+          description: UUID of the key row — pass it to `DELETE /api/v1/keys/{id}` to revoke.
+          type: string
+          format: uuid
+        tokenPrefix:
+          description: First 10 chars of the token (`ak_XXXXXXX`). Safe to display; can't authenticate.
+          type: string
+        label:
+          description: Optional human label set at mint time, or null.
+          type:
+          - string
+          - 'null'
+        rateLimitTier:
+          description: 'Rate-limit tier: `anonymous`, `authenticated`.'
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
+        lastUsedAt:
+          description: ISO 8601 timestamp of the most recent use, or null if never used.
+          type:
+          - string
+          - 'null'
+          format: date-time
+        active:
+          description: False once the key has been revoked — a revoked key drops to the anonymous rate limit.
+          type: boolean
+      type: object
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+    CreateApiKeyResponse:
+      required:
+      - id
+      - token
+      - tokenPrefix
+      - rateLimitTier
+      - createdAt
+      properties:
+        id:
+          description: UUID of the key row. Used as the rate-limit bucket identifier server-side.
+          type: string
+          format: uuid
+        token:
+          description: 'Plaintext token. Shown ONCE — store it now. Every subsequent request presents it as `Authorization: Bearer <token>`.'
+          type: string
+        tokenPrefix:
+          description: First 10 chars of the token (`ak_XXXXXXX`). Safe to display + log.
+          type: string
+        label:
+          description: Optional human name echoed back from the request, or null if none was given.
+          type:
+          - string
+          - 'null'
+        rateLimitTier:
+          description: Rate-limit tier this key uses. Today always `anonymous` (100 scans/day/key). Authenticated tiers land with user accounts.
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

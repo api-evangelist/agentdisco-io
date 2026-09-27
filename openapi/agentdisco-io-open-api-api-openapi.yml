@@ -1,0 +1,35 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io OpenAPI API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged OpenAPI across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Open API
+  description: OpenAPI
+paths:
+  /api/v1/openapi.json:
+    get:
+      tags:
+      - Open API
+      summary: Fetch this OpenAPI document
+      operationId: get_openapi_spec
+      responses:
+        '200':
+          description: OpenAPI 3.1 document describing the public API surface.
+          content:
+            application/json:
+              schema:
+                type: object
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

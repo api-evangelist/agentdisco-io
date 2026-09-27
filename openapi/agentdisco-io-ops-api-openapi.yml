@@ -1,0 +1,152 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Ops API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Ops across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Ops
+paths:
+  /api/v1/ops/check-health:
+    get:
+      tags:
+      - Ops
+      summary: Per-check rolling-window health counts
+      description: Per-check-key × status counts over a rolling 24h window, sourced from completed scans. Protected by HTTP basic auth via `OPS_BASIC_AUTH_USER` / `OPS_BASIC_AUTH_PASS` env vars.
+      operationId: get_api_ops_check_health
+      responses:
+        '200':
+          description: JSON counts per check key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpsCheckHealthResponse'
+        '401':
+          description: Missing or invalid basic auth.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - opsBasic: []
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/ops/version:
+    get:
+      tags:
+      - Ops
+      summary: What release is currently deployed
+      description: The release tag + commit SHA + timestamp recorded by `scripts/deploy-prod.sh` on its last successful run. Source of truth for "what is live right now". Protected by the same HTTP basic auth as `/api/v1/ops/check-health` — the SHA is more informative to an attacker than the tag alone, so fail-closed by default. Returns 404 when no deploy has been recorded (e.g. in dev before any deploy has run).
+      operationId: get_api_ops_version
+      responses:
+        '200':
+          description: JSON `{tag, sha, deployedAt}`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpsVersionResponse'
+        '401':
+          description: Missing or invalid basic auth.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No deployed-version record yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - opsBasic: []
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+    OpsCheckHealthResponse:
+      required:
+      - window_hours
+      - generated_at
+      - checks
+      properties:
+        window_hours:
+          description: Width of the rolling window the counts are aggregated over (hours).
+          type: integer
+          example: 24
+        generated_at:
+          description: When this snapshot was generated.
+          type: string
+          format: date-time
+        checks:
+          description: Map of check key (e.g. `well_known.ai_plugin`) to per-status counts over the window. Every key carries all five status buckets even when zero, so consumers can render without null-checks.
+          type: object
+          additionalProperties:
+            required:
+            - pass
+            - warn
+            - fail
+            - skip
+            - error
+            properties:
+              pass:
+                type: integer
+                example: 42
+              warn:
+                type: integer
+                example: 3
+              fail:
+                type: integer
+                example: 5
+              skip:
+                type: integer
+                example: 0
+              error:
+                type: integer
+                example: 0
+            type: object
+      type: object
+    OpsVersionResponse:
+      properties:
+        tag:
+          description: SemVer release tag from the most recent successful deploy.
+          type:
+          - string
+          - 'null'
+          example: v1.2.3
+        sha:
+          description: Git commit SHA the tag pointed at.
+          type:
+          - string
+          - 'null'
+          example: d6fda3b00...
+        deployedAt:
+          description: When the deploy completed.
+          type:
+          - string
+          - 'null'
+          format: date-time
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

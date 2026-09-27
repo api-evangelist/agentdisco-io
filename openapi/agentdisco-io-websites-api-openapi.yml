@@ -1,0 +1,368 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Websites API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Websites across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Websites
+paths:
+  /api/v1/websites/{host}/badge.svg:
+    get:
+      tags:
+      - Websites
+      summary: Embeddable SVG grade badge for a host
+      description: Shields.io-style SVG for embedding on a third-party site. Shows the scan age; fades to grey after `agent_disco.badge_stale_days` (default 30) unless the embedder sends `?strict=1`, in which case a stale badge returns 410 Gone. Cached via filesystem pool + served with `Cache-Control` + an ETag.
+      operationId: get_api_website_badge
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: SVG badge.
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        '304':
+          description: Not modified (If-None-Match matched).
+        '404':
+          description: Unknown host or no completed scan.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '410':
+          description: Latest scan failed, host was unlisted, or scan is stale and the caller sent `?strict=1`.
+          content:
+            text/plain:
+              schema:
+                type: string
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}/badge.png:
+    get:
+      tags:
+      - Websites
+      summary: Embeddable PNG grade badge for a host
+      description: PNG version of the grade badge, for embedders that cannot render SVG. Identical content, staleness, and caching rules as `badge.svg` — only the format differs.
+      operationId: get_api_website_badge_png
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: PNG badge.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '304':
+          description: Not modified (If-None-Match matched).
+        '404':
+          description: Unknown host or no completed scan.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '410':
+          description: Latest scan failed, host was unlisted, or scan is stale and the caller sent `?strict=1`.
+          content:
+            text/plain:
+              schema:
+                type: string
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}:
+    get:
+      tags:
+      - Websites
+      summary: Summary for a scanned website
+      description: Latest grade + score + scan count for the host. Intended for the CLI / CI plugin so they don't need to scrape HTML.
+      operationId: get_api_website_show
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: Website known.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebsiteResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+      - Websites
+      summary: Delete a website and all its scans
+      description: Right-to-delete (GDPR-style). Removes the Website row plus every Scan + Finding under it, then invalidates the badge cache. Unauthenticated for MVP but rate-limited at 1/min per IP.
+      operationId: delete_api_website_delete
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '204':
+          description: Website removed.
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many deletion requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}/scans:
+    get:
+      tags:
+      - Websites
+      summary: Scan history for a website
+      description: Completed-scan history for a host, most-recent first, paginated (`?page=1&perPage=10`, perPage capped at 50). Each entry carries the grade/score and a link to the full scan detail. Lets a monitoring agent track a grade trend over time.
+      operationId: get_api_website_scans
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 1
+      - name: perPage
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: Scan history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanHistoryResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}/rescan:
+    post:
+      tags:
+      - Websites
+      summary: Re-scan a known website
+      description: 'Queue a fresh scan of an already-known host (its canonical URL). Counts against the caller''s scan rate limit exactly like `POST /api/v1/scans` — present `Authorization: Bearer ` for the higher per-key quota. Returns the queued scan to poll at `statusUrl`.'
+      operationId: post_api_website_rescan
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '202':
+          description: Re-scan queued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanAcceptedResponse'
+        '400':
+          description: The stored canonical URL failed re-validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Scan rate limit hit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+    ScanSummaryResponse:
+      required:
+      - id
+      - status
+      - statusUrl
+      properties:
+        id:
+          description: Scan UUID.
+          type: string
+          format: uuid
+        status:
+          description: Scan status — `completed` for history entries.
+          type: string
+        grade:
+          description: Letter grade A–F, or null if the scan did not complete.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0–100 score, or null if the scan did not complete.
+          type:
+          - integer
+          - 'null'
+        completedAt:
+          description: ISO 8601 completion timestamp, or null.
+          type:
+          - string
+          - 'null'
+          format: date-time
+        statusUrl:
+          description: Path to the full scan detail (findings) — `/api/v1/scans/{id}`.
+          type: string
+      type: object
+    WebsiteResponse:
+      required:
+      - host
+      - lastScannedAt
+      - scanCount
+      properties:
+        host:
+          type: string
+        latestGrade:
+          description: A..F once at least one scan has completed.
+          type:
+          - string
+          - 'null'
+        latestScore:
+          description: 0..100 once at least one scan has completed.
+          type:
+          - integer
+          - 'null'
+        lastScannedAt:
+          type: string
+          format: date-time
+        scanCount:
+          description: Count of completed scans for the host.
+          type: integer
+      type: object
+    ScanHistoryResponse:
+      required:
+      - host
+      - scans
+      - totalCount
+      - page
+      - perPage
+      properties:
+        host:
+          description: The normalized host these scans belong to.
+          type: string
+        scans:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanSummaryResponse'
+        totalCount:
+          description: Total completed scans for this host (across all pages).
+          type: integer
+        page:
+          description: Current page (1-based).
+          type: integer
+        perPage:
+          description: Scans per page (max 50).
+          type: integer
+      type: object
+    ScanAcceptedResponse:
+      required:
+      - id
+      - status
+      - statusUrl
+      - resultUrl
+      properties:
+        id:
+          description: UUID of the new scan.
+          type: string
+          format: uuid
+        status:
+          description: One of queued|running|completed|failed|cancelled.
+          type: string
+        statusUrl:
+          description: Poll this URL for current status.
+          type: string
+        resultUrl:
+          description: Public report page URL for the scanned host.
+          type: string
+        grade:
+          description: A..F letter grade once computed; null while queued/running.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0..100 score once computed; null while queued/running.
+          type:
+          - integer
+          - 'null'
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

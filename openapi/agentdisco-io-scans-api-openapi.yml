@@ -1,0 +1,308 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Scans API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Scans across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Scans
+paths:
+  /api/v1/scans:
+    post:
+      tags:
+      - Scans
+      summary: Submit a new scan
+      description: 'Queue a scan of the given URL. Runs asynchronously on the `scans` worker (inline in tests). Rate limit: 10 scans/day per client IP when unauthenticated; 100 scans/day per key when `Authorization: Bearer ak_…` is presented. Mint a key via `POST /api/v1/keys`.'
+      operationId: post_api_scan_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScanRequest'
+      responses:
+        '202':
+          description: Scan accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanAcceptedResponse'
+        '400':
+          description: URL failed validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Scan quota exceeded (anonymous or keyed bucket).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/scans/{id}:
+    get:
+      tags:
+      - Scans
+      summary: Fetch a scan by id
+      operationId: get_api_scan_show
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[0-9a-f-]{36}'
+      responses:
+        '200':
+          description: Scan found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanDetailResponse'
+        '404':
+          description: Unknown scan id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/scans/{id}/diff:
+    get:
+      tags:
+      - Scans
+      summary: Diff a scan against the previous one
+      description: 'What changed between this scan and the previous completed scan of the same host: the grade/score swing and the checks that flipped pass↔fail. `previousScanId` is null when there is no prior completed scan to compare against.'
+      operationId: get_api_scan_diff
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[0-9a-f-]{36}'
+      responses:
+        '200':
+          description: The diff.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanDiffResponse'
+        '404':
+          description: Unknown scan id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+    ScanDiffResponse:
+      required:
+      - scanId
+      - newFailures
+      - newPasses
+      properties:
+        scanId:
+          description: The scan being diffed.
+          type: string
+          format: uuid
+        previousScanId:
+          description: The previous completed scan compared against, or null if there is none.
+          type:
+          - string
+          - 'null'
+          format: uuid
+        gradeFrom:
+          description: Grade of the previous scan, or null.
+          type:
+          - string
+          - 'null'
+        gradeTo:
+          description: Grade of this scan, or null if not completed.
+          type:
+          - string
+          - 'null'
+        scoreFrom:
+          description: Score of the previous scan, or null.
+          type:
+          - integer
+          - 'null'
+        scoreTo:
+          description: Score of this scan, or null if not completed.
+          type:
+          - integer
+          - 'null'
+        scoreDelta:
+          description: scoreTo − scoreFrom, or null when there is no previous scan.
+          type:
+          - integer
+          - 'null'
+        newFailures:
+          description: Check keys that flipped pass → fail since the previous scan.
+          type: array
+          items:
+            type: string
+        newPasses:
+          description: Check keys that flipped fail → pass since the previous scan.
+          type: array
+          items:
+            type: string
+      type: object
+    ScanDetailResponse:
+      required:
+      - id
+      - status
+      - phase
+      - requestedUrl
+      - host
+      - findings
+      - queuedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        phase:
+          description: passive|active
+          type: string
+        requestedUrl:
+          type: string
+        host:
+          type: string
+        score:
+          type:
+          - integer
+          - 'null'
+        grade:
+          type:
+          - string
+          - 'null'
+        summary:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindingResponse'
+        queuedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        completedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+      type: object
+    CreateScanRequest:
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+      type: object
+    FindingResponse:
+      required:
+      - id
+      - checkKey
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        checkKey:
+          description: e.g. crawl.robots_txt
+          type: string
+        status:
+          description: pass|fail|warn|skip|error
+          type: string
+        pointsEarned:
+          type:
+          - integer
+          - 'null'
+        pointsPossible:
+          type:
+          - integer
+          - 'null'
+        notes:
+          type:
+          - string
+          - 'null'
+        evidence:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        durationMs:
+          type:
+          - integer
+          - 'null'
+      type: object
+    ScanAcceptedResponse:
+      required:
+      - id
+      - status
+      - statusUrl
+      - resultUrl
+      properties:
+        id:
+          description: UUID of the new scan.
+          type: string
+          format: uuid
+        status:
+          description: One of queued|running|completed|failed|cancelled.
+          type: string
+        statusUrl:
+          description: Poll this URL for current status.
+          type: string
+        resultUrl:
+          description: Public report page URL for the scanned host.
+          type: string
+        grade:
+          description: A..F letter grade once computed; null while queued/running.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0..100 score once computed; null while queued/running.
+          type:
+          - integer
+          - 'null'
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

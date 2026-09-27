@@ -38,33 +38,16 @@ tags_raw:
 - MCP
 - Scanning
 apis:
-- name: Agent Disco API
-  description: >-
-    Public HTTP API under /api/v1 - submit a URL for grading, poll the scan, diff it against the previous
-    scan, read a host's latest grade and history, embed an SVG/PNG grade badge, read the check catalogue,
-    mint and revoke API keys, register signed scan.completed webhooks, and unlist or re-list a host with
-    DNS-TXT verification. Anonymous access is rate-limited per IP; ak_ bearer keys raise the quota and
-    Colony agents can mint one non-interactively via RFC 8693 token exchange.
+- aid: agentdisco-io:agentdisco-io-checks-api
+  name: Agent Disco Checks API
+  description: The Checks API from Agent Disco — 1 operation(s) for checks.
   humanURL: https://agentdisco.io/api/docs
   baseURL: https://agentdisco.io/api/v1
   tags:
-  - AI Agents
-  - Agent Discoverability
-  - Website Auditing
-  - Webhook
-  - Scanning
-  tags_raw:
-  - AI Agents
-  - Agent Discoverability
-  - Website Auditing
-  - Webhooks
-  - Scanning
+  - Checks
   properties:
   - type: OpenAPI
-    url: openapi/agentdisco-io-openapi.yml
-  - type: OpenAPI
-    name: Provider-hosted OpenAPI 3.1 document
-    url: https://agentdisco.io/api/v1/openapi.json
+    url: openapi/agentdisco-io-checks-api-openapi.yml
   - type: APIReference
     url: https://agentdisco.io/api/docs
   - type: Documentation
@@ -77,8 +60,188 @@ apis:
     url: errors/agentdisco-io-problem-types.yml
   - type: DataModel
     url: data-model/agentdisco-io-data-model.yml
-  - type: Overlay
-    url: overlays/agentdisco-io-openapi-overlay.yaml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-keys-api
+  name: Agent Disco Keys API
+  description: The Keys API from Agent Disco — 3 operation(s) for keys.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Keys
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-keys-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-ops-api
+  name: Agent Disco Ops API
+  description: The Ops API from Agent Disco — 2 operation(s) for ops.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Ops
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-ops-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-scans-api
+  name: Agent Disco Scans API
+  description: The Scans API from Agent Disco — 3 operation(s) for scans.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Scans
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-scans-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-unlist-api
+  name: Agent Disco Unlist API
+  description: The Unlist API from Agent Disco — 4 operation(s) for unlist.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Unlist
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-unlist-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-webhooks-api
+  name: Agent Disco Webhooks API
+  description: The Webhooks API from Agent Disco — 2 operation(s) for webhooks.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-webhooks-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-websites-api
+  name: Agent Disco Websites API
+  description: The Websites API from Agent Disco — 5 operation(s) for websites.
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Websites
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-websites-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
+  - type: RateLimits
+    url: rate-limits/agentdisco-io-rate-limits.yml
+  - type: Webhooks
+    url: asyncapi/agentdisco-io-webhooks.yml
+- aid: agentdisco-io:agentdisco-io-open-api-api
+  name: Agent Disco Open API
+  description: OpenAPI
+  humanURL: https://agentdisco.io/api/docs
+  baseURL: https://agentdisco.io/api/v1
+  tags:
+  - Open API
+  properties:
+  - type: OpenAPI
+    url: openapi/agentdisco-io-open-api-api-openapi.yml
+  - type: APIReference
+    url: https://agentdisco.io/api/docs
+  - type: Documentation
+    url: https://agentdisco.io/developers
+  - type: Authentication
+    url: authentication/agentdisco-io-authentication.yml
+  - type: Conventions
+    url: conventions/agentdisco-io-conventions.yml
+  - type: ErrorCatalog
+    url: errors/agentdisco-io-problem-types.yml
+  - type: DataModel
+    url: data-model/agentdisco-io-data-model.yml
   - type: RateLimits
     url: rate-limits/agentdisco-io-rate-limits.yml
   - type: Webhooks
@@ -89,6 +252,8 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Overlay
+  url: overlays/agentdisco-io-openapi-overlay.yaml
 - type: Website
   url: https://agentdisco.io/
 - type: DeveloperPortal

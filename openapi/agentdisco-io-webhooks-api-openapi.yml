@@ -1,0 +1,217 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Webhooks API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Webhooks across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Webhooks
+paths:
+  /api/v1/webhooks:
+    get:
+      tags:
+      - Webhooks
+      summary: List the caller account's webhooks
+      description: List the scan webhooks of the account behind the presented bearer key. Never returns the signing secret (only the create endpoint does, once) — just delivery health.
+      operationId: get_api_webhook_list
+      responses:
+        '200':
+          description: The account's webhooks.
+          content:
+            application/json:
+              schema:
+                properties:
+                  webhooks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookResponse'
+                type: object
+        '401':
+          description: No account-bound key presented.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - Webhooks
+      summary: Create a scan webhook
+      description: Register an https receiver for a host's completed scans. The host must already have been scanned. The response carries the HMAC signing secret ONCE — store it. Rate-limited at 5/hour per account (shared with the web form). Verify deliveries with HMAC-SHA256(secret, raw_body).
+      operationId: post_api_webhook_create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                host:
+                  description: A normalized host that has been scanned (e.g. example.com).
+                  type: string
+                url:
+                  description: The https receiver URL.
+                  type: string
+              type: object
+      responses:
+        '201':
+          description: Webhook created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookCreatedResponse'
+        '400':
+          description: Missing fields, or a non-https / SSRF-blocked URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: No account-bound key presented.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The host has not been scanned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many webhook-creation attempts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/webhooks/{id}:
+    delete:
+      tags:
+      - Webhooks
+      summary: Delete a webhook
+      description: Delete one of the caller account's webhooks. A missing webhook and another account's webhook both return 404 so ids can't be probed.
+      operationId: delete_api_webhook_delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[0-9a-f-]{36}'
+      responses:
+        '200':
+          description: Webhook deleted.
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  deleted:
+                    type: boolean
+                type: object
+        '401':
+          description: No account-bound key presented.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No such webhook under this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+    WebhookResponse:
+      required:
+      - id
+      - host
+      - url
+      - createdAt
+      - consecutiveFailures
+      properties:
+        id:
+          description: Webhook UUID — pass it to `DELETE /api/v1/webhooks/{id}`.
+          type: string
+          format: uuid
+        host:
+          description: The scanned host whose completed scans fire this webhook.
+          type: string
+        url:
+          description: The receiver URL we POST signed JSON to.
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
+        consecutiveFailures:
+          description: Consecutive delivery failures; auto-pauses after 5.
+          type: integer
+        lastSucceededAt:
+          description: ISO 8601 timestamp of the last successful delivery, or null.
+          type:
+          - string
+          - 'null'
+          format: date-time
+        lastFailedAt:
+          description: ISO 8601 timestamp of the last failed delivery, or null.
+          type:
+          - string
+          - 'null'
+          format: date-time
+      type: object
+    WebhookCreatedResponse:
+      required:
+      - id
+      - host
+      - url
+      - secret
+      - createdAt
+      properties:
+        id:
+          description: Webhook UUID.
+          type: string
+          format: uuid
+        host:
+          description: The host whose completed scans fire this webhook.
+          type: string
+        url:
+          description: The receiver URL.
+          type: string
+        secret:
+          description: HMAC-SHA256 signing secret — shown ONCE. Store it now.
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

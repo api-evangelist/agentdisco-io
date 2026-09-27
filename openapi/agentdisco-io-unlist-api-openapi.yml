@@ -1,0 +1,239 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Unlist API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Unlist across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Unlist
+paths:
+  /api/v1/websites/{host}/unlist:
+    post:
+      tags:
+      - Unlist
+      summary: Request an unlist verification token
+      description: Begin the DNS-TXT un-list flow. Returns a one-off token plus the TXT record the caller must configure at the target's `_agentdisco-verify.` before POSTing to /unlist/confirm. Rate-limited to 1/hour per IP.
+      operationId: post_api_website_unlist_request
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: Token issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlistRequestResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Unlist quota exceeded for this IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}/unlist/confirm:
+    post:
+      tags:
+      - Unlist
+      summary: Confirm the unlist with the issued token
+      description: 'Complete the un-list flow: resolves the `_agentdisco-verify.` TXT record, checks it contains the token issued by /unlist, and flips Website.visibility to `unlisted` on match. Rate-limited to 1/hour per IP.'
+      operationId: post_api_website_unlist_confirm
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: Host unlisted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlistConfirmResponse'
+        '400':
+          description: Missing token, or token/host mismatch, or the TXT record was not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Unlist quota exceeded for this IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}/relist:
+    post:
+      tags:
+      - Unlist
+      summary: Request a re-list verification token
+      description: Begin the DNS-TXT re-list flow — the inverse of /unlist. Returns a one-off token plus the TXT record to publish at `_agentdisco-verify.` before POSTing to /relist/confirm. A no-op (200) if the host is already listed. Rate-limited to 1/hour per IP.
+      operationId: post_api_website_relist_request
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: Token issued, or host already listed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlistRequestResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Quota exceeded for this IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+  /api/v1/websites/{host}/relist/confirm:
+    post:
+      tags:
+      - Unlist
+      summary: Confirm the re-list with the issued token
+      description: 'Complete the re-list flow: resolves `_agentdisco-verify.` TXT, checks it contains the token issued by /relist, and flips Website.visibility back to `listed` on match.'
+      operationId: post_api_website_relist_confirm
+      parameters:
+      - name: host
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '[a-z0-9.\-]+'
+      responses:
+        '200':
+          description: Host re-listed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlistConfirmResponse'
+        '400':
+          description: Missing token, or token/host mismatch, or the TXT record was not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Unknown host.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    UnlistConfirmResponse:
+      required:
+      - host
+      - visibility
+      - message
+      properties:
+        host:
+          description: Normalised host that was unlisted.
+          type: string
+        visibility:
+          description: New visibility — always `unlisted` on success.
+          type: string
+          example: unlisted
+        message:
+          description: Human-readable confirmation. Includes the re-list contact path.
+          type: string
+      type: object
+    UnlistDnsRecord:
+      required:
+      - name
+      - type
+      - value
+      properties:
+        name:
+          description: Fully-qualified record name to publish.
+          type: string
+          example: _agentdisco-verify.example.com
+        type:
+          description: DNS record type — always TXT.
+          type: string
+          example: TXT
+        value:
+          description: Verification token to embed in the record value.
+          type: string
+      type: object
+    UnlistRequestResponse:
+      required:
+      - token
+      - dns_record
+      - expires_in_seconds
+      - confirm_url
+      properties:
+        token:
+          description: 32 hex chars, 128 bits of entropy. The caller must place this in a TXT record at `_agentdisco-verify.<host>` before POSTing to /unlist/confirm.
+          type: string
+        dns_record:
+          $ref: '#/components/schemas/UnlistDnsRecord'
+          description: TXT record the caller must publish for the confirm step to succeed.
+        expires_in_seconds:
+          description: How long the token + cached host association is valid for.
+          type: integer
+          example: 86400
+        confirm_url:
+          description: 'URL the caller POSTs `{"token": "..."}` to in step 2.'
+          type: string
+      type: object
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml

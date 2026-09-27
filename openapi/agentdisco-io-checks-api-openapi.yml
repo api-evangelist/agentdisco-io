@@ -1,0 +1,73 @@
+openapi: 3.2.0
+info:
+  title: Agentdisco Io Checks API
+  version: 1.0.0
+  contact:
+    name: Starsol Ltd
+    url: https://agentdisco.io
+    email: disty@agentdisco.io
+  description: 'Operations tagged Checks across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://agentdisco.io
+  description: Production
+tags:
+- name: Checks
+paths:
+  /api/v1/checks:
+    get:
+      tags:
+      - Checks
+      summary: List every active check
+      description: JSON sibling of the `/checks` catalogue page. ETag lets clients skip the payload on revisits.
+      operationId: get_api_checks_index
+      responses:
+        '200':
+          description: Active checks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecksListResponse'
+        '304':
+          description: Not modified (If-None-Match matched).
+    servers:
+    - url: https://agentdisco.io
+      description: Production
+components:
+  schemas:
+    ChecksListResponse:
+      required:
+      - checks
+      properties:
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckResponse'
+      type: object
+    CheckResponse:
+      required:
+      - key
+      - label
+      - category
+      - weight
+      - phase
+      - description
+      properties:
+        key:
+          description: Stable key, e.g. crawl.robots_txt.
+          type: string
+        label:
+          type: string
+        category:
+          type: string
+        weight:
+          type: integer
+        phase:
+          description: passive|active
+          type: string
+        description:
+          description: Markdown description — rendered on /checks/{key}.
+          type: string
+      type: object
+x-refined-from:
+- agentdisco-io-openapi.json
+- agentdisco-io-openapi.yml
