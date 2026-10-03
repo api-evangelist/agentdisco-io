@@ -1,12 +1,18 @@
 openapi: 3.2.0
 info:
-  title: Agentdisco Io Keys API
-  version: 1.0.0
+  title: Agent Disco Keys API
+  description: 'Public HTTP API for Agent Disco — submit scans, inspect
+
+    results, consume the checks catalogue, embed grade badges.
+
+    Documented contract under `/api/v1/`. Rate-limited per
+
+    client IP (10 anonymous scans / day by default).'
   contact:
     name: Starsol Ltd
     url: https://agentdisco.io
     email: disty@agentdisco.io
-  description: 'Operations tagged Keys across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+  version: 1.0.0
 servers:
 - url: https://agentdisco.io
   description: Production
@@ -57,9 +63,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/keys/{id}:
     delete:
       tags:
@@ -103,9 +106,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/auth/colony/agent:
     get:
       tags:
@@ -197,11 +197,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
 components:
   schemas:
+    CreateApiKeyResponse:
+      required:
+      - id
+      - token
+      - tokenPrefix
+      - rateLimitTier
+      - createdAt
+      properties:
+        id:
+          description: UUID of the key row. Used as the rate-limit bucket identifier server-side.
+          type: string
+          format: uuid
+        token:
+          description: 'Plaintext token. Shown ONCE — store it now. Every subsequent request presents it as `Authorization: Bearer <token>`.'
+          type: string
+        tokenPrefix:
+          description: First 10 chars of the token (`ak_XXXXXXX`). Safe to display + log.
+          type: string
+        label:
+          description: Optional human name echoed back from the request, or null if none was given.
+          type:
+          - string
+          - 'null'
+        rateLimitTier:
+          description: Rate-limit tier this key uses. Today always `anonymous` (100 scans/day/key). Authenticated tiers land with user accounts.
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
+      type: object
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
     ApiKeySummaryResponse:
       required:
       - id
@@ -239,50 +280,3 @@ components:
           description: False once the key has been revoked — a revoked key drops to the anonymous rate limit.
           type: boolean
       type: object
-    ErrorResponse:
-      description: Common JSON body for 4xx/5xx responses.
-      required:
-      - error
-      - message
-      properties:
-        error:
-          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
-          type: string
-        message:
-          description: Human-readable explanation.
-          type: string
-      type: object
-    CreateApiKeyResponse:
-      required:
-      - id
-      - token
-      - tokenPrefix
-      - rateLimitTier
-      - createdAt
-      properties:
-        id:
-          description: UUID of the key row. Used as the rate-limit bucket identifier server-side.
-          type: string
-          format: uuid
-        token:
-          description: 'Plaintext token. Shown ONCE — store it now. Every subsequent request presents it as `Authorization: Bearer <token>`.'
-          type: string
-        tokenPrefix:
-          description: First 10 chars of the token (`ak_XXXXXXX`). Safe to display + log.
-          type: string
-        label:
-          description: Optional human name echoed back from the request, or null if none was given.
-          type:
-          - string
-          - 'null'
-        rateLimitTier:
-          description: Rate-limit tier this key uses. Today always `anonymous` (100 scans/day/key). Authenticated tiers land with user accounts.
-          type: string
-        createdAt:
-          description: ISO 8601 creation timestamp.
-          type: string
-          format: date-time
-      type: object
-x-refined-from:
-- agentdisco-io-openapi.json
-- agentdisco-io-openapi.yml

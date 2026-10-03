@@ -1,8 +1,7 @@
 {
   "provider": "agentdisco-io",
   "sources": [
-    "_original/agentdisco-io-openapi.json",
-    "agentdisco-io-openapi.yml"
+    "_original/agentdisco-io-openapi.json"
   ],
   "outputs": [
     "agentdisco-io-checks-api-openapi.yml",
@@ -15,23 +14,26 @@
     "agentdisco-io-websites-api-openapi.yml"
   ],
   "archived": [
-    "archived openapi/agentdisco-io-openapi.yml"
+    "deleted 1 superseded output(s) from the previous generation"
   ],
   "errors": [],
   "warnings": [],
   "notes": [
+    "1 archived document(s) dropped as subsets of other archived documents",
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
     "agentdisco-io-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "agentdisco-io-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "tag 'Checks' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'Keys' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'OpenAPI' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'Ops' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'Scans' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'Unlist' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'Webhooks' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "tag 'Websites' spans 2 source specs (agentdisco-io-openapi.json, agentdisco-io-openapi.yml): per-path servers applied",
-    "apis.yml register: written (+8 apis, 8 total)"
+    "superseded outputs removed: agentdisco-io-open-api-api-openapi.yml",
+    "apis.yml register: written (+1 apis, 8 total)"
   ],
-  "skipped": []
+  "skipped": [
+    "_original/agentdisco-io-openapi.yml: archived document superseded by a larger archived document",
+    "agentdisco-io-checks-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-keys-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-open-api-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-ops-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-scans-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-unlist-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-webhooks-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "agentdisco-io-websites-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

@@ -1,12 +1,18 @@
 openapi: 3.2.0
 info:
-  title: Agentdisco Io Unlist API
-  version: 1.0.0
+  title: Agent Disco Unlist API
+  description: 'Public HTTP API for Agent Disco — submit scans, inspect
+
+    results, consume the checks catalogue, embed grade badges.
+
+    Documented contract under `/api/v1/`. Rate-limited per
+
+    client IP (10 anonymous scans / day by default).'
   contact:
     name: Starsol Ltd
     url: https://agentdisco.io
     email: disty@agentdisco.io
-  description: 'Operations tagged Unlist across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+  version: 1.0.0
 servers:
 - url: https://agentdisco.io
   description: Production
@@ -46,9 +52,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}/unlist/confirm:
     post:
       tags:
@@ -88,9 +91,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}/relist:
     post:
       tags:
@@ -124,9 +124,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}/relist/confirm:
     post:
       tags:
@@ -160,9 +157,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
 components:
   schemas:
     UnlistConfirmResponse:
@@ -180,24 +174,6 @@ components:
           example: unlisted
         message:
           description: Human-readable confirmation. Includes the re-list contact path.
-          type: string
-      type: object
-    UnlistDnsRecord:
-      required:
-      - name
-      - type
-      - value
-      properties:
-        name:
-          description: Fully-qualified record name to publish.
-          type: string
-          example: _agentdisco-verify.example.com
-        type:
-          description: DNS record type — always TXT.
-          type: string
-          example: TXT
-        value:
-          description: Verification token to embed in the record value.
           type: string
       type: object
     UnlistRequestResponse:
@@ -234,6 +210,21 @@ components:
           description: Human-readable explanation.
           type: string
       type: object
-x-refined-from:
-- agentdisco-io-openapi.json
-- agentdisco-io-openapi.yml
+    UnlistDnsRecord:
+      required:
+      - name
+      - type
+      - value
+      properties:
+        name:
+          description: Fully-qualified record name to publish.
+          type: string
+          example: _agentdisco-verify.example.com
+        type:
+          description: DNS record type — always TXT.
+          type: string
+          example: TXT
+        value:
+          description: Verification token to embed in the record value.
+          type: string
+      type: object

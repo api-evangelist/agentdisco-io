@@ -1,12 +1,18 @@
 openapi: 3.2.0
 info:
-  title: Agentdisco Io Scans API
-  version: 1.0.0
+  title: Agent Disco Scans API
+  description: 'Public HTTP API for Agent Disco — submit scans, inspect
+
+    results, consume the checks catalogue, embed grade badges.
+
+    Documented contract under `/api/v1/`. Rate-limited per
+
+    client IP (10 anonymous scans / day by default).'
   contact:
     name: Starsol Ltd
     url: https://agentdisco.io
     email: disty@agentdisco.io
-  description: 'Operations tagged Scans across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+  version: 1.0.0
 servers:
 - url: https://agentdisco.io
   description: Production
@@ -45,9 +51,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/scans/{id}:
     get:
       tags:
@@ -74,9 +77,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/scans/{id}/diff:
     get:
       tags:
@@ -104,24 +104,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
 components:
   schemas:
-    ErrorResponse:
-      description: Common JSON body for 4xx/5xx responses.
-      required:
-      - error
-      - message
-      properties:
-        error:
-          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
-          type: string
-        message:
-          description: Human-readable explanation.
-          type: string
-      type: object
     ScanDiffResponse:
       required:
       - scanId
@@ -173,6 +157,95 @@ components:
           type: array
           items:
             type: string
+      type: object
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
+    CreateScanRequest:
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+      type: object
+    ScanAcceptedResponse:
+      required:
+      - id
+      - status
+      - statusUrl
+      - resultUrl
+      properties:
+        id:
+          description: UUID of the new scan.
+          type: string
+          format: uuid
+        status:
+          description: One of queued|running|completed|failed|cancelled.
+          type: string
+        statusUrl:
+          description: Poll this URL for current status.
+          type: string
+        resultUrl:
+          description: Public report page URL for the scanned host.
+          type: string
+        grade:
+          description: A..F letter grade once computed; null while queued/running.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0..100 score once computed; null while queued/running.
+          type:
+          - integer
+          - 'null'
+      type: object
+    FindingResponse:
+      required:
+      - id
+      - checkKey
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        checkKey:
+          description: e.g. crawl.robots_txt
+          type: string
+        status:
+          description: pass|fail|warn|skip|error
+          type: string
+        pointsEarned:
+          type:
+          - integer
+          - 'null'
+        pointsPossible:
+          type:
+          - integer
+          - 'null'
+        notes:
+          type:
+          - string
+          - 'null'
+        evidence:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+        durationMs:
+          type:
+          - integer
+          - 'null'
       type: object
     ScanDetailResponse:
       required:
@@ -227,82 +300,3 @@ components:
           - 'null'
           format: date-time
       type: object
-    CreateScanRequest:
-      required:
-      - url
-      properties:
-        url:
-          type: string
-          maxLength: 2048
-      type: object
-    FindingResponse:
-      required:
-      - id
-      - checkKey
-      - status
-      properties:
-        id:
-          type: string
-          format: uuid
-        checkKey:
-          description: e.g. crawl.robots_txt
-          type: string
-        status:
-          description: pass|fail|warn|skip|error
-          type: string
-        pointsEarned:
-          type:
-          - integer
-          - 'null'
-        pointsPossible:
-          type:
-          - integer
-          - 'null'
-        notes:
-          type:
-          - string
-          - 'null'
-        evidence:
-          type:
-          - object
-          - 'null'
-          additionalProperties: true
-        durationMs:
-          type:
-          - integer
-          - 'null'
-      type: object
-    ScanAcceptedResponse:
-      required:
-      - id
-      - status
-      - statusUrl
-      - resultUrl
-      properties:
-        id:
-          description: UUID of the new scan.
-          type: string
-          format: uuid
-        status:
-          description: One of queued|running|completed|failed|cancelled.
-          type: string
-        statusUrl:
-          description: Poll this URL for current status.
-          type: string
-        resultUrl:
-          description: Public report page URL for the scanned host.
-          type: string
-        grade:
-          description: A..F letter grade once computed; null while queued/running.
-          type:
-          - string
-          - 'null'
-        score:
-          description: 0..100 score once computed; null while queued/running.
-          type:
-          - integer
-          - 'null'
-      type: object
-x-refined-from:
-- agentdisco-io-openapi.json
-- agentdisco-io-openapi.yml

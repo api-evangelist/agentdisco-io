@@ -1,12 +1,18 @@
 openapi: 3.2.0
 info:
-  title: Agentdisco Io Websites API
-  version: 1.0.0
+  title: Agent Disco Websites API
+  description: 'Public HTTP API for Agent Disco — submit scans, inspect
+
+    results, consume the checks catalogue, embed grade badges.
+
+    Documented contract under `/api/v1/`. Rate-limited per
+
+    client IP (10 anonymous scans / day by default).'
   contact:
     name: Starsol Ltd
     url: https://agentdisco.io
     email: disty@agentdisco.io
-  description: 'Operations tagged Websites across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+  version: 1.0.0
 servers:
 - url: https://agentdisco.io
   description: Production
@@ -49,9 +55,6 @@ paths:
             text/plain:
               schema:
                 type: string
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}/badge.png:
     get:
       tags:
@@ -88,9 +91,6 @@ paths:
             text/plain:
               schema:
                 type: string
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}:
     get:
       tags:
@@ -146,9 +146,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}/scans:
     get:
       tags:
@@ -189,9 +186,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/websites/{host}/rescan:
     post:
       tags:
@@ -231,9 +225,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
 components:
   schemas:
     ErrorResponse:
@@ -248,6 +239,31 @@ components:
         message:
           description: Human-readable explanation.
           type: string
+      type: object
+    WebsiteResponse:
+      required:
+      - host
+      - lastScannedAt
+      - scanCount
+      properties:
+        host:
+          type: string
+        latestGrade:
+          description: A..F once at least one scan has completed.
+          type:
+          - string
+          - 'null'
+        latestScore:
+          description: 0..100 once at least one scan has completed.
+          type:
+          - integer
+          - 'null'
+        lastScannedAt:
+          type: string
+          format: date-time
+        scanCount:
+          description: Count of completed scans for the host.
+          type: integer
       type: object
     ScanSummaryResponse:
       required:
@@ -281,31 +297,6 @@ components:
         statusUrl:
           description: Path to the full scan detail (findings) — `/api/v1/scans/{id}`.
           type: string
-      type: object
-    WebsiteResponse:
-      required:
-      - host
-      - lastScannedAt
-      - scanCount
-      properties:
-        host:
-          type: string
-        latestGrade:
-          description: A..F once at least one scan has completed.
-          type:
-          - string
-          - 'null'
-        latestScore:
-          description: 0..100 once at least one scan has completed.
-          type:
-          - integer
-          - 'null'
-        lastScannedAt:
-          type: string
-          format: date-time
-        scanCount:
-          description: Count of completed scans for the host.
-          type: integer
       type: object
     ScanHistoryResponse:
       required:
@@ -363,6 +354,3 @@ components:
           - integer
           - 'null'
       type: object
-x-refined-from:
-- agentdisco-io-openapi.json
-- agentdisco-io-openapi.yml

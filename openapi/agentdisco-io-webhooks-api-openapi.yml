@@ -1,12 +1,18 @@
 openapi: 3.2.0
 info:
-  title: Agentdisco Io Webhooks API
-  version: 1.0.0
+  title: Agent Disco Webhooks API
+  description: 'Public HTTP API for Agent Disco — submit scans, inspect
+
+    results, consume the checks catalogue, embed grade badges.
+
+    Documented contract under `/api/v1/`. Rate-limited per
+
+    client IP (10 anonymous scans / day by default).'
   contact:
     name: Starsol Ltd
     url: https://agentdisco.io
     email: disty@agentdisco.io
-  description: 'Operations tagged Webhooks across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+  version: 1.0.0
 servers:
 - url: https://agentdisco.io
   description: Production
@@ -88,9 +94,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
   /api/v1/webhooks/{id}:
     delete:
       tags:
@@ -130,9 +133,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    servers:
-    - url: https://agentdisco.io
-      description: Production
 components:
   schemas:
     ErrorResponse:
@@ -147,6 +147,32 @@ components:
         message:
           description: Human-readable explanation.
           type: string
+      type: object
+    WebhookCreatedResponse:
+      required:
+      - id
+      - host
+      - url
+      - secret
+      - createdAt
+      properties:
+        id:
+          description: Webhook UUID.
+          type: string
+          format: uuid
+        host:
+          description: The host whose completed scans fire this webhook.
+          type: string
+        url:
+          description: The receiver URL.
+          type: string
+        secret:
+          description: HMAC-SHA256 signing secret — shown ONCE. Store it now.
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
       type: object
     WebhookResponse:
       required:
@@ -186,32 +212,3 @@ components:
           - 'null'
           format: date-time
       type: object
-    WebhookCreatedResponse:
-      required:
-      - id
-      - host
-      - url
-      - secret
-      - createdAt
-      properties:
-        id:
-          description: Webhook UUID.
-          type: string
-          format: uuid
-        host:
-          description: The host whose completed scans fire this webhook.
-          type: string
-        url:
-          description: The receiver URL.
-          type: string
-        secret:
-          description: HMAC-SHA256 signing secret — shown ONCE. Store it now.
-          type: string
-        createdAt:
-          description: ISO 8601 creation timestamp.
-          type: string
-          format: date-time
-      type: object
-x-refined-from:
-- agentdisco-io-openapi.json
-- agentdisco-io-openapi.yml

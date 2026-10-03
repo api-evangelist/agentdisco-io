@@ -1,12 +1,18 @@
 openapi: 3.2.0
 info:
-  title: Agentdisco Io Checks API
-  version: 1.0.0
+  title: Agent Disco Checks API
+  description: 'Public HTTP API for Agent Disco — submit scans, inspect
+
+    results, consume the checks catalogue, embed grade badges.
+
+    Documented contract under `/api/v1/`. Rate-limited per
+
+    client IP (10 anonymous scans / day by default).'
   contact:
     name: Starsol Ltd
     url: https://agentdisco.io
     email: disty@agentdisco.io
-  description: 'Operations tagged Checks across 2 of this provider''s published API definitions: agentdisco-io-openapi.json, agentdisco-io-openapi.yml. Each path carries the servers of the definition it was published in.'
+  version: 1.0.0
 servers:
 - url: https://agentdisco.io
   description: Production
@@ -29,9 +35,6 @@ paths:
                 $ref: '#/components/schemas/ChecksListResponse'
         '304':
           description: Not modified (If-None-Match matched).
-    servers:
-    - url: https://agentdisco.io
-      description: Production
 components:
   schemas:
     ChecksListResponse:
@@ -68,6 +71,3 @@ components:
           description: Markdown description — rendered on /checks/{key}.
           type: string
       type: object
-x-refined-from:
-- agentdisco-io-openapi.json
-- agentdisco-io-openapi.yml
