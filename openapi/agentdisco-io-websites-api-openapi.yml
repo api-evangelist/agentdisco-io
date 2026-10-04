@@ -240,6 +240,37 @@ components:
           description: Human-readable explanation.
           type: string
       type: object
+    ScanAcceptedResponse:
+      required:
+      - id
+      - status
+      - statusUrl
+      - resultUrl
+      properties:
+        id:
+          description: UUID of the new scan.
+          type: string
+          format: uuid
+        status:
+          description: One of queued|running|completed|failed|cancelled.
+          type: string
+        statusUrl:
+          description: Poll this URL for current status.
+          type: string
+        resultUrl:
+          description: Public report page URL for the scanned host.
+          type: string
+        grade:
+          description: A..F letter grade once computed; null while queued/running.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0..100 score once computed; null while queued/running.
+          type:
+          - integer
+          - 'null'
+      type: object
     WebsiteResponse:
       required:
       - host
@@ -263,6 +294,31 @@ components:
           format: date-time
         scanCount:
           description: Count of completed scans for the host.
+          type: integer
+      type: object
+    ScanHistoryResponse:
+      required:
+      - host
+      - scans
+      - totalCount
+      - page
+      - perPage
+      properties:
+        host:
+          description: The normalized host these scans belong to.
+          type: string
+        scans:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanSummaryResponse'
+        totalCount:
+          description: Total completed scans for this host (across all pages).
+          type: integer
+        page:
+          description: Current page (1-based).
+          type: integer
+        perPage:
+          description: Scans per page (max 50).
           type: integer
       type: object
     ScanSummaryResponse:
@@ -297,60 +353,4 @@ components:
         statusUrl:
           description: Path to the full scan detail (findings) — `/api/v1/scans/{id}`.
           type: string
-      type: object
-    ScanHistoryResponse:
-      required:
-      - host
-      - scans
-      - totalCount
-      - page
-      - perPage
-      properties:
-        host:
-          description: The normalized host these scans belong to.
-          type: string
-        scans:
-          type: array
-          items:
-            $ref: '#/components/schemas/ScanSummaryResponse'
-        totalCount:
-          description: Total completed scans for this host (across all pages).
-          type: integer
-        page:
-          description: Current page (1-based).
-          type: integer
-        perPage:
-          description: Scans per page (max 50).
-          type: integer
-      type: object
-    ScanAcceptedResponse:
-      required:
-      - id
-      - status
-      - statusUrl
-      - resultUrl
-      properties:
-        id:
-          description: UUID of the new scan.
-          type: string
-          format: uuid
-        status:
-          description: One of queued|running|completed|failed|cancelled.
-          type: string
-        statusUrl:
-          description: Poll this URL for current status.
-          type: string
-        resultUrl:
-          description: Public report page URL for the scanned host.
-          type: string
-        grade:
-          description: A..F letter grade once computed; null while queued/running.
-          type:
-          - string
-          - 'null'
-        score:
-          description: 0..100 score once computed; null while queued/running.
-          type:
-          - integer
-          - 'null'
       type: object

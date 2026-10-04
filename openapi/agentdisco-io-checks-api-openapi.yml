@@ -37,15 +37,6 @@ paths:
           description: Not modified (If-None-Match matched).
 components:
   schemas:
-    ChecksListResponse:
-      required:
-      - checks
-      properties:
-        checks:
-          type: array
-          items:
-            $ref: '#/components/schemas/CheckResponse'
-      type: object
     CheckResponse:
       required:
       - key
@@ -70,4 +61,13 @@ components:
         description:
           description: Markdown description — rendered on /checks/{key}.
           type: string
+      type: object
+    ChecksListResponse:
+      required:
+      - checks
+      properties:
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckResponse'
       type: object

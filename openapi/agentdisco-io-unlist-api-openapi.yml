@@ -159,23 +159,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    UnlistConfirmResponse:
-      required:
-      - host
-      - visibility
-      - message
-      properties:
-        host:
-          description: Normalised host that was unlisted.
-          type: string
-        visibility:
-          description: New visibility — always `unlisted` on success.
-          type: string
-          example: unlisted
-        message:
-          description: Human-readable confirmation. Includes the re-list contact path.
-          type: string
-      type: object
     UnlistRequestResponse:
       required:
       - token
@@ -226,5 +209,22 @@ components:
           example: TXT
         value:
           description: Verification token to embed in the record value.
+          type: string
+      type: object
+    UnlistConfirmResponse:
+      required:
+      - host
+      - visibility
+      - message
+      properties:
+        host:
+          description: Normalised host that was unlisted.
+          type: string
+        visibility:
+          description: New visibility — always `unlisted` on success.
+          type: string
+          example: unlisted
+        message:
+          description: Human-readable confirmation. Includes the re-list contact path.
           type: string
       type: object
