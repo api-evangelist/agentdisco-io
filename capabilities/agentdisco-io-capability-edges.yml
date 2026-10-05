@@ -1,0 +1,36 @@
+slug: agentdisco-io
+provider: Agent Disco
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 2
+edges:
+- tag: Keys
+  spec_file: agentdisco-io-keys-api-openapi.yml
+  capability_id: BC-4270.40
+  capability_id_l1: BC-4270
+  capability_name: Developer Identity & Credential Management
+  confidence: 0.85
+  evidence: GET /api/v1/keys  get_api_key_list  List the caller account's API keys; POST /api/v1/keys  post_api_key_create  Create
+    an anonymous API key; DELETE /api/v1/keys/{id}  delete_api_key_revoke
+  reason: Issuance, listing and revocation of API keys plus a federated agent sign-in exchange for obtaining
+    a key is squarely Developer Identity & Credential Management for a public API.
+- tag: Webhooks
+  spec_file: agentdisco-io-webhooks-api-openapi.yml
+  capability_id: BC-4270.80
+  capability_id_l1: BC-4270
+  capability_name: Webhook & Event Subscription Management
+  confidence: 0.78
+  evidence: POST /api/v1/webhooks  post_api_webhook_create  Create a scan webhook; DELETE /api/v1/webhooks/{id}  Delete
+    a webhook
+  reason: The operations are the full lifecycle (list/create/delete) of outbound webhook subscriptions
+    that notify the caller when scans complete — exactly Webhook & Event Subscription Management on the
+    vendor's public developer API surface. Not a business-domain capability beyond that.
