@@ -254,6 +254,8 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Pricing
+  url: https://agentdisco.io/developers
 - type: CapabilityMap
   url: capabilities/agentdisco-io-capability-edges.yml
   name: Agent Disco Business Capability Map
