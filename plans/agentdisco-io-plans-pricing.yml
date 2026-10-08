@@ -48,3 +48,28 @@ plans:
 free_tier: true
 paid_plans_published: false
 enterprise_contact: null
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - metered
+  units: []
+  plans:
+  - name: Anonymous
+    access: other
+    model: metered
+    model_how: derived
+    units: []
+    periods: []
+  - name: Keyed (anonymous API key)
+    access: other
+    model: metered
+    model_how: derived
+    units: []
+    periods: []
+  - name: Authenticated (signed-in)
+    access: other
+    model: metered
+    model_how: derived
+    units: []
+    periods: []
