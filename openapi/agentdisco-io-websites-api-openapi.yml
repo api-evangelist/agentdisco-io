@@ -227,19 +227,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    ErrorResponse:
-      description: Common JSON body for 4xx/5xx responses.
-      required:
-      - error
-      - message
-      properties:
-        error:
-          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
-          type: string
-        message:
-          description: Human-readable explanation.
-          type: string
-      type: object
     ScanAcceptedResponse:
       required:
       - id
@@ -270,6 +257,52 @@ components:
           type:
           - integer
           - 'null'
+      type: object
+    ScanSummaryResponse:
+      required:
+      - id
+      - status
+      - statusUrl
+      properties:
+        id:
+          description: Scan UUID.
+          type: string
+          format: uuid
+        status:
+          description: Scan status — `completed` for history entries.
+          type: string
+        grade:
+          description: Letter grade A–F, or null if the scan did not complete.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0–100 score, or null if the scan did not complete.
+          type:
+          - integer
+          - 'null'
+        completedAt:
+          description: ISO 8601 completion timestamp, or null.
+          type:
+          - string
+          - 'null'
+          format: date-time
+        statusUrl:
+          description: Path to the full scan detail (findings) — `/api/v1/scans/{id}`.
+          type: string
+      type: object
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
       type: object
     WebsiteResponse:
       required:
@@ -320,37 +353,4 @@ components:
         perPage:
           description: Scans per page (max 50).
           type: integer
-      type: object
-    ScanSummaryResponse:
-      required:
-      - id
-      - status
-      - statusUrl
-      properties:
-        id:
-          description: Scan UUID.
-          type: string
-          format: uuid
-        status:
-          description: Scan status — `completed` for history entries.
-          type: string
-        grade:
-          description: Letter grade A–F, or null if the scan did not complete.
-          type:
-          - string
-          - 'null'
-        score:
-          description: 0–100 score, or null if the scan did not complete.
-          type:
-          - integer
-          - 'null'
-        completedAt:
-          description: ISO 8601 completion timestamp, or null.
-          type:
-          - string
-          - 'null'
-          format: date-time
-        statusUrl:
-          description: Path to the full scan detail (findings) — `/api/v1/scans/{id}`.
-          type: string
       type: object

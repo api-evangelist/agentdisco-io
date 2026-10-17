@@ -159,27 +159,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    UnlistRequestResponse:
-      required:
-      - token
-      - dns_record
-      - expires_in_seconds
-      - confirm_url
-      properties:
-        token:
-          description: 32 hex chars, 128 bits of entropy. The caller must place this in a TXT record at `_agentdisco-verify.<host>` before POSTing to /unlist/confirm.
-          type: string
-        dns_record:
-          $ref: '#/components/schemas/UnlistDnsRecord'
-          description: TXT record the caller must publish for the confirm step to succeed.
-        expires_in_seconds:
-          description: How long the token + cached host association is valid for.
-          type: integer
-          example: 86400
-        confirm_url:
-          description: 'URL the caller POSTs `{"token": "..."}` to in step 2.'
-          type: string
-      type: object
     ErrorResponse:
       description: Common JSON body for 4xx/5xx responses.
       required:
@@ -191,6 +170,23 @@ components:
           type: string
         message:
           description: Human-readable explanation.
+          type: string
+      type: object
+    UnlistConfirmResponse:
+      required:
+      - host
+      - visibility
+      - message
+      properties:
+        host:
+          description: Normalised host that was unlisted.
+          type: string
+        visibility:
+          description: New visibility — always `unlisted` on success.
+          type: string
+          example: unlisted
+        message:
+          description: Human-readable confirmation. Includes the re-list contact path.
           type: string
       type: object
     UnlistDnsRecord:
@@ -211,20 +207,24 @@ components:
           description: Verification token to embed in the record value.
           type: string
       type: object
-    UnlistConfirmResponse:
+    UnlistRequestResponse:
       required:
-      - host
-      - visibility
-      - message
+      - token
+      - dns_record
+      - expires_in_seconds
+      - confirm_url
       properties:
-        host:
-          description: Normalised host that was unlisted.
+        token:
+          description: 32 hex chars, 128 bits of entropy. The caller must place this in a TXT record at `_agentdisco-verify.<host>` before POSTing to /unlist/confirm.
           type: string
-        visibility:
-          description: New visibility — always `unlisted` on success.
-          type: string
-          example: unlisted
-        message:
-          description: Human-readable confirmation. Includes the re-list contact path.
+        dns_record:
+          $ref: '#/components/schemas/UnlistDnsRecord'
+          description: TXT record the caller must publish for the confirm step to succeed.
+        expires_in_seconds:
+          description: How long the token + cached host association is valid for.
+          type: integer
+          example: 86400
+        confirm_url:
+          description: 'URL the caller POSTs `{"token": "..."}` to in step 2.'
           type: string
       type: object

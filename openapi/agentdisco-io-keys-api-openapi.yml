@@ -199,6 +199,19 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
     CreateApiKeyResponse:
       required:
       - id
@@ -229,19 +242,6 @@ components:
           description: ISO 8601 creation timestamp.
           type: string
           format: date-time
-      type: object
-    ErrorResponse:
-      description: Common JSON body for 4xx/5xx responses.
-      required:
-      - error
-      - message
-      properties:
-        error:
-          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
-          type: string
-        message:
-          description: Human-readable explanation.
-          type: string
       type: object
     ApiKeySummaryResponse:
       required:

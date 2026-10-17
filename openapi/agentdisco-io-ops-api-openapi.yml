@@ -71,6 +71,19 @@ paths:
       - opsBasic: []
 components:
   schemas:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
+      required:
+      - error
+      - message
+      properties:
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+          type: string
+        message:
+          description: Human-readable explanation.
+          type: string
+      type: object
     OpsVersionResponse:
       properties:
         tag:
@@ -133,17 +146,4 @@ components:
                 type: integer
                 example: 0
             type: object
-      type: object
-    ErrorResponse:
-      description: Common JSON body for 4xx/5xx responses.
-      required:
-      - error
-      - message
-      properties:
-        error:
-          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
-          type: string
-        message:
-          description: Human-readable explanation.
-          type: string
       type: object

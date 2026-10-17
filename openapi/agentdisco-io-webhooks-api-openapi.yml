@@ -135,31 +135,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    WebhookCreatedResponse:
+    ErrorResponse:
+      description: Common JSON body for 4xx/5xx responses.
       required:
-      - id
-      - host
-      - url
-      - secret
-      - createdAt
+      - error
+      - message
       properties:
-        id:
-          description: Webhook UUID.
+        error:
+          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
           type: string
-          format: uuid
-        host:
-          description: The host whose completed scans fire this webhook.
+        message:
+          description: Human-readable explanation.
           type: string
-        url:
-          description: The receiver URL.
-          type: string
-        secret:
-          description: HMAC-SHA256 signing secret — shown ONCE. Store it now.
-          type: string
-        createdAt:
-          description: ISO 8601 creation timestamp.
-          type: string
-          format: date-time
       type: object
     WebhookResponse:
       required:
@@ -199,16 +186,29 @@ components:
           - 'null'
           format: date-time
       type: object
-    ErrorResponse:
-      description: Common JSON body for 4xx/5xx responses.
+    WebhookCreatedResponse:
       required:
-      - error
-      - message
+      - id
+      - host
+      - url
+      - secret
+      - createdAt
       properties:
-        error:
-          description: Short machine-readable slug, e.g. "invalid_url" or "not_found".
+        id:
+          description: Webhook UUID.
           type: string
-        message:
-          description: Human-readable explanation.
+          format: uuid
+        host:
+          description: The host whose completed scans fire this webhook.
           type: string
+        url:
+          description: The receiver URL.
+          type: string
+        secret:
+          description: HMAC-SHA256 signing secret — shown ONCE. Store it now.
+          type: string
+        createdAt:
+          description: ISO 8601 creation timestamp.
+          type: string
+          format: date-time
       type: object

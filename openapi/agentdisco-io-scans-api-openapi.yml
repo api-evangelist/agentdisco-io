@@ -106,13 +106,36 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    CreateScanRequest:
+    ScanAcceptedResponse:
       required:
-      - url
+      - id
+      - status
+      - statusUrl
+      - resultUrl
       properties:
-        url:
+        id:
+          description: UUID of the new scan.
           type: string
-          maxLength: 2048
+          format: uuid
+        status:
+          description: One of queued|running|completed|failed|cancelled.
+          type: string
+        statusUrl:
+          description: Poll this URL for current status.
+          type: string
+        resultUrl:
+          description: Public report page URL for the scanned host.
+          type: string
+        grade:
+          description: A..F letter grade once computed; null while queued/running.
+          type:
+          - string
+          - 'null'
+        score:
+          description: 0..100 score once computed; null while queued/running.
+          type:
+          - integer
+          - 'null'
       type: object
     ErrorResponse:
       description: Common JSON body for 4xx/5xx responses.
@@ -216,37 +239,6 @@ components:
           - integer
           - 'null'
       type: object
-    ScanAcceptedResponse:
-      required:
-      - id
-      - status
-      - statusUrl
-      - resultUrl
-      properties:
-        id:
-          description: UUID of the new scan.
-          type: string
-          format: uuid
-        status:
-          description: One of queued|running|completed|failed|cancelled.
-          type: string
-        statusUrl:
-          description: Poll this URL for current status.
-          type: string
-        resultUrl:
-          description: Public report page URL for the scanned host.
-          type: string
-        grade:
-          description: A..F letter grade once computed; null while queued/running.
-          type:
-          - string
-          - 'null'
-        score:
-          description: 0..100 score once computed; null while queued/running.
-          type:
-          - integer
-          - 'null'
-      type: object
     ScanDetailResponse:
       required:
       - id
@@ -299,4 +291,12 @@ components:
           - string
           - 'null'
           format: date-time
+      type: object
+    CreateScanRequest:
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          maxLength: 2048
       type: object
