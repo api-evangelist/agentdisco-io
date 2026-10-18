@@ -228,6 +228,8 @@ apis:
   humanURL: https://agentdisco.io/api/docs
   baseURL: https://agentdisco.io/api/v1
   tags:
+  - OpenAPI
+  tags_raw:
   - Open API
   properties:
   - type: OpenAPI
