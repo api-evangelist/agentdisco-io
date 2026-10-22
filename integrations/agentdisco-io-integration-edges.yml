@@ -1,4 +1,34 @@
 edges:
+- partner_name: PyPI
+  partner: pypi
+  partner_match: register
+  type: register
+  direction: provider-built
+  category: official SDK (Python)
+  evidence: https://pypi.org/project/agentdisco/
+  channel: package-registry
+  relationship: distribution-channel
+  contract_reference:
+    register: PyPI (public registry JSON)
+    spec_file: null
+    language: Python
+    packages:
+    - name: agentdisco
+      version: 0.4.0
+      released: '2026-07-20'
+      released_field: upload_time
+      lapsed: false
+      page: https://pypi.org/project/agentdisco/
+      repo_leg: domain:agentdisco.io
+      publisher_leg: email:agentdisco.io
+      matched_by: domain
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months'
+    detected_by: sweep-official-sdks.py
+    detected: '2026-10-18'
+  detected_by: sweep-official-sdks.py
+  first_seen: '2026-10-18'
 - partner_name: A2A protocol (own Agent Card)
   partner: null
   partner_match: register
@@ -29,7 +59,7 @@ edges:
     matched_domain: agentdisco.io
     matched_by: own-domain
     detected_by: sweep-ai-agents.py
-    detected: '2026-10-15'
+    detected: '2026-10-19'
   detected_by: sweep-ai-agents.py
   first_seen: '2026-10-15'
 - partner_name: a2aregistry.org
@@ -65,39 +95,9 @@ edges:
     sample_agents:
     - Agent Disco
     detected_by: sweep-ai-agents.py
-    detected: '2026-10-15'
+    detected: '2026-10-19'
   detected_by: sweep-ai-agents.py
   first_seen: '2026-10-15'
-- partner_name: PyPI
-  partner: pypi
-  partner_match: register
-  type: register
-  direction: provider-built
-  category: official SDK (Python)
-  evidence: https://pypi.org/project/agentdisco/
-  channel: package-registry
-  relationship: distribution-channel
-  contract_reference:
-    register: PyPI (public registry JSON)
-    spec_file: null
-    language: Python
-    packages:
-    - name: agentdisco
-      version: 0.4.0
-      released: '2026-07-20'
-      released_field: upload_time
-      lapsed: false
-      page: https://pypi.org/project/agentdisco/
-      repo_leg: domain:agentdisco.io
-      publisher_leg: email:agentdisco.io
-      matched_by: domain
-    current: true
-    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
-      24 months'
-    detected_by: sweep-official-sdks.py
-    detected: '2026-10-18'
-  detected_by: sweep-official-sdks.py
-  first_seen: '2026-10-18'
 generated: '2026-10-15'
 method: searched
 source:
