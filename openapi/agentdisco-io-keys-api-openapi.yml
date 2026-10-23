@@ -280,3 +280,9 @@ components:
           description: False once the key has been revoked — a revoked key drops to the anonymous rate limit.
           type: boolean
       type: object
+x-provenance:
+  method: harvested
+  publisher: Agent Disco
+  source: https://agentdisco.io/api/v1/openapi.json
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
