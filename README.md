@@ -66,27 +66,131 @@
 
 Agent Disco grades any public website for AI-agent discoverability. Operated by Starsol Ltd (Norwich, England), it fetches the handful of URIs agent runtimes actually read - robots.txt rules for GPTBot and ClaudeBot, llms.txt, /.well-known/ai-plugin.json, agent.json and mcp.json, OpenAPI specs, SDK and registry signals, TLS and anti-bot posture - and returns a letter grade A-F with a per-category breakdown, fix hints and an embeddable badge. A public REST API under /api/v1 (OpenAPI 3.1, Swagger UI) submits scans, polls results, diffs scans, manages API keys and signed scan.completed webhooks, and lets autonomous agents sign in with a Colony identity through OAuth 2.0 Token Exchange (RFC 8693).
 
-- Website: https://agentdisco.io/
-- Developers: https://agentdisco.io/developers
-- API reference (Swagger UI): https://agentdisco.io/api/docs
-- OpenAPI 3.1: https://agentdisco.io/api/v1/openapi.json
-- llms.txt: https://agentdisco.io/llms.txt
-- Python SDK: https://pypi.org/project/agentdisco/
+**Areas:** AI Agents · Agent Discoverability · Website Auditing · Developer Tools · Webhook · llms-txt · A2A · MCP · Scanning
 
-## What this profile holds
+## Agent Disco on APIs.io
 
-Everything below was fetched from agentdisco.io (or derived from what was fetched) on 2026-09-19; provenance is stamped in each file.
+Everything profiled for Agent Disco is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/agentdisco-io/](https://apis.io/providers/agentdisco-io/)** — or go straight to one of the APIs or properties below.
 
-| Artifact | Method | Path |
-|---|---|---|
-| OpenAPI 3.1 (25 operations) | searched | `openapi/agentdisco-io-openapi.yml` (verbatim source in `openapi/_original/`) |
-| A2A agent card (legacy path, graded flavored) | probed | `a2a/` |
-| MCP descriptor (no server shipped) + tool crosswalk | searched / derived | `mcp/` |
-| llms.txt | searched | `llms/` |
-| Well-known surface (security.txt, ai-plugin.json, mcp.json, agent.json; Colony OAuth metadata) | searched | `well-known/` |
-| Python SDK on PyPI | searched | `packages/` |
-| Webhooks (scan.completed, HMAC-signed) | searched | `asyncapi/` |
-| Authentication, conventions, rate limits, plans, lifecycle, conformance, errors, data model, components, regulatory posture | searched / derived | respective folders |
-| Domain security and vulnerability disclosure probes | probed | `security/` |
-| Agent skills | generated | `skills/` |
-| OpenAPI Overlay (adds the undeclared security schemes) | generated | `overlays/` |
+### APIs (8)
+
+- [Agent Disco Checks API](https://apis.io/apis/agentdisco-io/agentdisco-io-checks-api/) — The Checks API from Agent Disco — 1 operation(s) for checks.
+- [Agent Disco Keys API](https://apis.io/apis/agentdisco-io/agentdisco-io-keys-api/) — The Keys API from Agent Disco — 3 operation(s) for keys.
+- [Agent Disco Ops API](https://apis.io/apis/agentdisco-io/agentdisco-io-ops-api/) — The Ops API from Agent Disco — 2 operation(s) for ops.
+- [Agent Disco Scans API](https://apis.io/apis/agentdisco-io/agentdisco-io-scans-api/) — The Scans API from Agent Disco — 3 operation(s) for scans.
+- [Agent Disco Unlist API](https://apis.io/apis/agentdisco-io/agentdisco-io-unlist-api/) — The Unlist API from Agent Disco — 4 operation(s) for unlist.
+- [Agent Disco Webhooks API](https://apis.io/apis/agentdisco-io/agentdisco-io-webhooks-api/) — The Webhooks API from Agent Disco — 2 operation(s) for webhooks.
+- [Agent Disco Websites API](https://apis.io/apis/agentdisco-io/agentdisco-io-websites-api/) — The Websites API from Agent Disco — 5 operation(s) for websites.
+- [Agent Disco Open API](https://apis.io/apis/agentdisco-io/agentdisco-io-open-api-api/) — OpenAPI
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### AsyncAPI (1)
+
+Event-driven and webhook contracts.
+
+- [Agentdisco Io Webhooks](https://apis.io/asyncapis/agentdisco-io/agentdisco-io-webhooks/)
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [agent-disco](https://apis.io/servers/agentdisco-io/agent-disco/)
+
+#### Overlays (1)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Agentdisco Io Openapi Overlay](https://apis.io/overlays/agentdisco-io/agentdisco-io-openapi-overlay/)
+
+#### Security (3)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Agentdisco Io Authentication](https://apis.io/security/agentdisco-io/agentdisco-io-authentication/)
+- [Agentdisco Io Domain Security](https://apis.io/security/agentdisco-io/agentdisco-io-domain-security/)
+- [Agentdisco Io Vulnerability Disclosure](https://apis.io/security/agentdisco-io/agentdisco-io-vulnerability-disclosure/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Agentdisco Io Plans Pricing](https://apis.io/plans/agentdisco-io/agentdisco-io-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Agentdisco Io Rate Limits](https://apis.io/rate-limits/agentdisco-io/agentdisco-io-rate-limits/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://agentdisco.io/)
+- [Documentation](https://agentdisco.io/developers)
+- [Getting started](https://agentdisco.io/llms-full.txt)
+- [API reference](https://agentdisco.io/api/docs)
+- [Pricing](https://agentdisco.io/developers)
+- [Sign up](https://agentdisco.io/register)
+- [Support](https://agentdisco.io/contact)
+- [Terms of service](https://agentdisco.io/terms)
+- [Privacy policy](https://agentdisco.io/privacy)
+- [GitHub](https://github.com/agentdisco)
+
+## API Evangelist rating
+
+**Kin Score 60.9** — strong · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 73.2 |
+| Contract quality | 53.9 |
+| Contract governance | 18.2 |
+| Operational transparency | 55.3 |
+| Developer ergonomics | 63.7 |
+| Access clarity | 76.3 |
+
+**Agent readiness 50.2** — agent-ready (gated down from agent-native)
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | served (partial credit) |
+| Idempotency | — |
+| Error Semantics | verified |
+| OpenAPI Examples | partial |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | flavored (partial credit) |
+| Dry Run Mode | — |
+| Delegated Identity | served (partial credit) |
+| Protected Resource Metadata | verified |
+| Dynamic Client Registration | yes |
+| Agentic Commerce | — |
+| Pagination Ratio | na |
+| Operation Distinctiveness | distinct |
+
+**Regulatory alignment 38.2** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/agentdisco-io/](https://apis.io/providers/agentdisco-io/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Agent Disco: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/agentdisco-io/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
