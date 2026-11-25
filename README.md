@@ -66,7 +66,7 @@
 
 Agent Disco grades any public website for AI-agent discoverability. Operated by Starsol Ltd (Norwich, England), it fetches the handful of URIs agent runtimes actually read - robots.txt rules for GPTBot and ClaudeBot, llms.txt, /.well-known/ai-plugin.json, agent.json and mcp.json, OpenAPI specs, SDK and registry signals, TLS and anti-bot posture - and returns a letter grade A-F with a per-category breakdown, fix hints and an embeddable badge. A public REST API under /api/v1 (OpenAPI 3.1, Swagger UI) submits scans, polls results, diffs scans, manages API keys and signed scan.completed webhooks, and lets autonomous agents sign in with a Colony identity through OAuth 2.0 Token Exchange (RFC 8693).
 
-**Areas:** AI Agents · Agent Discoverability · Website Auditing · Developer Tools · Webhook · llms-txt · A2A · MCP · Scanning
+**Areas:** AI Agents · Agent Discoverability · Website Auditing · Developer Tools · Webhook · llms.txt · A2A · MCP · Scanning
 
 ## Agent Disco on APIs.io
 
@@ -103,27 +103,39 @@ Model Context Protocol servers that expose the API to agents.
 
 OpenAPI overlays, including conversational phrasing for each operation.
 
-- [Agentdisco Io Openapi Overlay](https://apis.io/overlays/agentdisco-io/agentdisco-io-openapi-overlay/)
+- [Agent Disco Openapi Overlay](https://apis.io/overlays/agentdisco-io/agentdisco-io-openapi-overlay/)
+
+#### Governance rules (1)
+
+Spectral rulesets for the provider's contracts.
+
+- [Agent Disco API Rules](https://apis.io/rules/agentdisco-io/agentdisco-io-rules/)
 
 #### Security (3)
 
 Authentication, trust centre, and vulnerability disclosure.
 
-- [Agentdisco Io Authentication](https://apis.io/security/agentdisco-io/agentdisco-io-authentication/)
-- [Agentdisco Io Domain Security](https://apis.io/security/agentdisco-io/agentdisco-io-domain-security/)
-- [Agentdisco Io Vulnerability Disclosure](https://apis.io/security/agentdisco-io/agentdisco-io-vulnerability-disclosure/)
+- [Agent Disco Authentication](https://apis.io/security/agentdisco-io/agentdisco-io-authentication/)
+- [Agent Disco Domain Security](https://apis.io/security/agentdisco-io/agentdisco-io-domain-security/)
+- [Agent Disco Vulnerability Disclosure](https://apis.io/security/agentdisco-io/agentdisco-io-vulnerability-disclosure/)
 
 #### Plans and pricing (1)
 
 Published plans, tiers and prices.
 
-- [Agentdisco Io Plans Pricing](https://apis.io/plans/agentdisco-io/agentdisco-io-plans-pricing/)
+- [Agent Disco Plans Pricing](https://apis.io/plans/agentdisco-io/agentdisco-io-plans-pricing/)
 
 #### Rate limits (1)
 
 Published request limits.
 
-- [Agentdisco Io Rate Limits](https://apis.io/rate-limits/agentdisco-io/agentdisco-io-rate-limits/)
+- [Agent Disco Rate Limits](https://apis.io/rate-limits/agentdisco-io/agentdisco-io-rate-limits/)
+
+#### FinOps (1)
+
+What the API costs to run, by operation.
+
+- [Agent Disco Finops](https://apis.io/finops/agentdisco-io/agentdisco-io-finops/)
 
 ## Where to find this API
 
@@ -142,18 +154,18 @@ Links to the company's own pages. This repository publishes no copy of their spe
 
 ## API Evangelist rating
 
-**Kin Score 60.9** — strong · rubric 0.25.0 · scored 2026-10-23
+**Kin Score 60.2** — strong · rubric 0.28.1 · scored 2026-11-21
 
 | Facet | Score |
 |---|---|
 | Discoverability | 73.2 |
-| Contract quality | 53.9 |
-| Contract governance | 18.2 |
-| Operational transparency | 55.3 |
+| Contract quality | 59.0 |
+| Contract governance | 31.8 |
+| Operational transparency | 50.0 |
 | Developer ergonomics | 63.7 |
-| Access clarity | 76.3 |
+| Access clarity | 61.7 |
 
-**Agent readiness 50.2** — agent-ready (gated down from agent-native)
+**Agent readiness 45.7** — agent-ready (gated down from agent-native)
 
 | Agent-readiness dimension | Result |
 |---|---|
@@ -173,11 +185,15 @@ Links to the company's own pages. This repository publishes no copy of their spe
 | Agent Card | flavored (partial credit) |
 | Dry Run Mode | — |
 | Delegated Identity | served (partial credit) |
-| Protected Resource Metadata | verified |
+| Protected Resource Metadata | — |
 | Dynamic Client Registration | yes |
 | Agentic Commerce | — |
 | Pagination Ratio | na |
 | Operation Distinctiveness | distinct |
+| MCP Tool Quality | na |
+| Onboarding Descriptor | — |
+| Dns Aid Index | na |
+| Markdown Negotiation | na |
 
 **Regulatory alignment 38.2** — Horizontal (data, software, accessibility, platform)
 
